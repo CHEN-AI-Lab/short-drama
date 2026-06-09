@@ -5,3 +5,5 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+  '@parcel/watcher': true
+  '@swc/core': true
