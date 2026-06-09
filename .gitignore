@@ -7,3 +7,5 @@ dist/
 .env.*.local
 package-lock.json
 next-env.d.ts
+
+tsconfig.tsbuildinfo
