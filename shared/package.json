@@ -1,0 +1,23 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./api": "./api/index.ts",
+    "./utils/*": "./utils/*",
+    "./messages/*": "./messages/*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2",
+    "zod": "^3.24.0"
+  }
+}

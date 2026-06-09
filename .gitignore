@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.turbo/
+dist/
+*.local
+.env.local
+.env.*.local
+package-lock.json
+next-env.d.ts
