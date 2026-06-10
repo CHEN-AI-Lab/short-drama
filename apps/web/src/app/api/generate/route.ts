@@ -92,9 +92,10 @@ export async function POST(request: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 8192,
+        max_tokens: 4096,
         temperature: 0.7,
       }),
+      signal: AbortSignal.timeout(60000),
     })
 
     if (!aiRes.ok) {
@@ -183,9 +184,22 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Invalid request: ' + error.message }, { status: 400 })
     }
-    console.error('Generation error:', error)
+
+    // Handle AbortError / timeout
+    const err = error as Error
+    if (err.name === 'AbortError') {
+      return NextResponse.json({ error: 'AI service timed out. Please try again.' }, { status: 504 })
+    }
+
+    // Handle fetch errors (network, DNS, etc.)
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      return NextResponse.json({ error: 'Network error connecting to AI service.' }, { status: 502 })
+    }
+
+    const errorMessage = err.message || 'Internal server error'
+    console.error('Generation error:', errorMessage)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

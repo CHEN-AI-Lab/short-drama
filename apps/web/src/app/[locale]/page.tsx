@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import DramaGenerator from '../../components/DramaGenerator'
+import ErrorBoundary from '../../components/ErrorBoundary'
 
 export default function HomePage() {
   const params = useParams()
@@ -60,7 +61,9 @@ export default function HomePage() {
       </section>
 
       {/* Drama Generator */}
-      <DramaGenerator />
+      <ErrorBoundary locale={locale}>
+        <DramaGenerator />
+      </ErrorBoundary>
     </div>
   )
 }

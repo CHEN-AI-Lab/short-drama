@@ -1,31 +1,62 @@
 import type { GenerationRequest, GenerationResponse } from '../types'
 
+const TIMEOUT_MS = 70000 // 70s — slightly longer than server's 60s AbortSignal
+
 /**
  * Send a drama generation request to the API.
+ * Handles timeout, network errors, and non-ok responses gracefully.
  */
 export async function generateDrama(
   req: GenerationRequest
 ): Promise<GenerationResponse> {
-  const res = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }))
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Request failed' }))
+      return {
+        title: '',
+        premise: '',
+        characters: [],
+        episodes: [],
+        characterArcs: [],
+        error: err.error || `Request failed (${res.status})`,
+      }
+    }
+
+    const data: GenerationResponse = await res.json()
+    return data
+  } catch (err) {
+    clearTimeout(timeoutId)
+
+    let errorMsg = 'AI service error, please try again later'
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      errorMsg = 'Request timed out. The AI service is taking too long, please try again.'
+    } else if (err instanceof TypeError) {
+      errorMsg = 'Network error. Please check your connection and try again.'
+    } else if (err instanceof Error) {
+      errorMsg = err.message
+    }
+
     return {
       title: '',
       premise: '',
       characters: [],
       episodes: [],
       characterArcs: [],
-      error: err.error || 'Request failed',
+      error: errorMsg,
     }
   }
-
-  const data: GenerationResponse = await res.json()
-  return data
 }
 
 export { createSupabaseClient } from './supabase'
