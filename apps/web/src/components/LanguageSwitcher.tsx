@@ -1,17 +1,20 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 export default function LanguageSwitcher() {
   const params = useParams()
+  const pathname = usePathname()
+  const router = useRouter()
   const currentLocale = (params.locale as string) || 'zh-CN'
   const t = useTranslations('common')
 
   const toggleLocale = () => {
     const next = currentLocale === 'zh-CN' ? 'en' : 'zh-CN'
-    document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=31536000; SameSite=Lax`
-    window.location.reload()
+    // Replace locale prefix in the pathname
+    const newPath = pathname.replace(`/${currentLocale}`, `/${next}`)
+    router.push(newPath)
   }
 
   return (
