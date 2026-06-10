@@ -35,7 +35,7 @@ export default function DramaGenerator() {
   const gtt = useTranslations('generationTypes')
   const et = useTranslations('errors')
 
-  // ── State ──────────────────────────────────────────────────────
+  // ── State ──
   const [selectedGenres, setSelectedGenres] = useState<DramaGenre[]>([])
   const [episodeCount, setEpisodeCount] = useState<EpisodeCount>(50)
   const [generationType, setGenerationType] = useState<GenerationType>('outline')
@@ -45,7 +45,7 @@ export default function DramaGenerator() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ResultTab>('characters')
 
-  // ── Handlers ───────────────────────────────────────────────────
+  // ── Handlers ──
   const toggleGenre = useCallback(
     (genre: DramaGenre) => {
       if (selectedGenres.includes(genre)) {
@@ -93,29 +93,26 @@ export default function DramaGenerator() {
     }
   }, [selectedGenres, episodeCount, generationType, locale, additionalInstructions, et])
 
-  const handleRetry = useCallback(() => {
-    handleGenerate()
-  }, [handleGenerate])
+  const getGenreLabel = (genre: DramaGenre): string => gt(genre)
+  const getGenreIcon = (genre: DramaGenre): string =>
+    GENRES.find((g: GenreInfo) => g.key === genre)?.icon || ''
 
-  // ── Genre label helper ─────────────────────────────────────────
-  const getGenreLabel = (genre: DramaGenre): string => {
-    return gt(genre)
-  }
+  // ── Section wrapper ──
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 md:p-6 shadow-sm">
+      <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
+        {title}
+      </h2>
+      {children}
+    </section>
+  )
 
-  const getGenreIcon = (genre: DramaGenre): string => {
-    const info = GENRES.find((g: GenreInfo) => g.key === genre)
-    return info?.icon || ''
-  }
-
-  // ── Render ─────────────────────────────────────────────────────
+  // ── Render ──
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Genre selection */}
-      <section>
-        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          {ct('selectGenre')}
-        </h2>
-        <div className="flex flex-wrap gap-2">
+      <Section title={ct('selectGenre')}>
+        <div className="flex flex-wrap gap-2.5">
           {GENRES.map((genre: GenreInfo) => {
             const isActive = selectedGenres.includes(genre.key)
             return (
@@ -131,19 +128,15 @@ export default function DramaGenerator() {
           })}
         </div>
         {selectedGenres.length >= 3 && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
             {ct('selectGenreMax')}
           </p>
         )}
-      </section>
+      </Section>
 
-      {/* Generation type + Episode count row */}
+      {/* Generation type + Episode count */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {/* Generation type */}
-        <section>
-          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            {ct('selectGenerationType')}
-          </h2>
+        <Section title={ct('selectGenerationType')}>
           <div className="flex flex-wrap gap-2">
             {GENERATION_TYPES.map((gtItem: GenerationTypeInfo) => {
               const isActive = generationType === gtItem.key
@@ -159,13 +152,9 @@ export default function DramaGenerator() {
               )
             })}
           </div>
-        </section>
+        </Section>
 
-        {/* Episode count */}
-        <section>
-          <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            {ct('selectEpisodeCount')}
-          </h2>
+        <Section title={ct('selectEpisodeCount')}>
           <div className="flex flex-wrap gap-2">
             {EPISODE_COUNTS.map((count: EpisodeCount) => {
               const isActive = episodeCount === count
@@ -180,14 +169,11 @@ export default function DramaGenerator() {
               )
             })}
           </div>
-        </section>
+        </Section>
       </div>
 
       {/* Additional instructions */}
-      <section>
-        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          {ct('additionalInstructions') || 'Additional Instructions (optional)'}
-        </h2>
+      <Section title={ct('additionalInstructions')}>
         <textarea
           value={additionalInstructions}
           onChange={(e) => {
@@ -197,15 +183,15 @@ export default function DramaGenerator() {
           }}
           placeholder={ct('placeholder')}
           rows={3}
-          className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow resize-none"
+          className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow resize-none"
         />
-        <p className="text-xs text-gray-400 mt-1 text-right">
+        <p className="text-xs text-gray-400 mt-1.5 text-right">
           {additionalInstructions.length}/500
         </p>
-      </section>
+      </Section>
 
       {/* Generate button */}
-      <div className="flex justify-center">
+      <div className="flex justify-center pt-2">
         <Button
           variant="gradient"
           size="lg"
@@ -217,9 +203,9 @@ export default function DramaGenerator() {
         </Button>
       </div>
 
-      {/* Loading state */}
+      {/* Loading */}
       {loading && (
-        <div className="flex flex-col items-center justify-center py-16 space-y-4">
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-700" />
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-500 animate-spin" />
@@ -233,11 +219,11 @@ export default function DramaGenerator() {
         </div>
       )}
 
-      {/* Error state */}
+      {/* Error */}
       {error && !loading && (
-        <div className="rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30 px-4 py-3 flex items-center gap-3">
+        <div className="rounded-2xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30 px-5 py-4 flex items-start gap-3">
           <svg
-            className="h-5 w-5 shrink-0 text-red-500"
+            className="h-5 w-5 shrink-0 mt-0.5 text-red-500"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
@@ -249,28 +235,27 @@ export default function DramaGenerator() {
               clipRule="evenodd"
             />
           </svg>
-          <span className="flex-1 text-sm text-red-800 dark:text-red-200">
-            {error}
-          </span>
-          <Button variant="secondary" size="sm" onClick={handleRetry}>
+          <div className="flex-1">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={handleGenerate}>
             {ct('retry')}
           </Button>
         </div>
       )}
 
-      {/* Result display */}
+      {/* Result */}
       {result && !loading && (
         <section className="space-y-6">
           {/* Title + Premise */}
           <Card>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {result.title}
               </h2>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                 {result.premise}
               </p>
-              {/* Selected genres badges */}
               <div className="flex flex-wrap gap-1.5">
                 {selectedGenres.map((genre) => (
                   <Badge key={genre} color="primary">
@@ -294,7 +279,7 @@ export default function DramaGenerator() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.key
                     ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -323,9 +308,9 @@ export default function DramaGenerator() {
             )}
           </div>
 
-          {/* Regenerate button */}
+          {/* Regenerate */}
           <div className="flex justify-center pt-4">
-            <Button variant="secondary" size="md" onClick={() => setResult(null)}>
+            <Button variant="outline" size="md" onClick={() => setResult(null)}>
               {ot('generateAgain')}
             </Button>
           </div>
@@ -334,8 +319,8 @@ export default function DramaGenerator() {
 
       {/* No result placeholder */}
       {!result && !loading && !error && (
-        <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/30 mb-4">
+        <div className="text-center py-20">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 mb-5">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-8 h-8 text-indigo-500"

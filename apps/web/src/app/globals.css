@@ -1,1 +1,37 @@
 @import "tailwindcss";
+
+/* ── Smooth scrolling ── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(220 13% 80%);
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(220 13% 30%);
+}
+
+/* ── Selection color ── */
+::selection {
+  background: hsl(239 84% 67% / 0.3);
+}
+
+/* ── Focus ring consistency ── */
+:focus-visible {
+  outline: 2px solid hsl(239 84% 67%);
+  outline-offset: 2px;
+}
+
+/* ── Typography helpers ── */
+.text-balance {
+  text-wrap: balance;
+}
