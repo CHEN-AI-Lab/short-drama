@@ -23,21 +23,33 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 transition-colors antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            {/* Top gradient accent bar */}
+            {/* Top accent bar */}
             <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
             {/* Header */}
             <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
               <div className="max-w-5xl mx-auto flex items-center justify-between px-4 h-14">
                 {/* Logo */}
-                <Link
-                  href={`/${locale}`}
-                  className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hover:from-indigo-400 hover:to-purple-500 transition-all"
-                >
-                  {t('appName')}
-                </Link>
+                <div className="flex items-center gap-6">
+                  <Link
+                    href={`/${locale}`}
+                    className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hover:from-indigo-400 hover:to-purple-500 transition-all"
+                  >
+                    {t('appName')}
+                  </Link>
 
-                {/* Right section: lang / theme / user */}
+                  {/* Nav links */}
+                  <nav className="hidden sm:flex items-center gap-5">
+                    <Link
+                      href={`/${locale}/pricing`}
+                      className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                    >
+                      {t('pricing')}
+                    </Link>
+                  </nav>
+                </div>
+
+                {/* Right section */}
                 <div className="flex items-center gap-2">
                   <LanguageSwitcher />
                   <ThemeToggle />

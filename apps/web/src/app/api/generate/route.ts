@@ -1,100 +1,90 @@
 import { NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { generationRequestSchema, buildGenerationPrompt, buildUserPrompt } from 'shared'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const DAILY_FREE_LIMIT = 3
+
 /**
- * SenseTime auth: exchange access_key + secret_key for a bearer token.
+ * Get Supabase server client with auth context.
  */
-async function getAccessToken(
-  baseUrl: string,
-  accessKey: string,
-  secretKey: string
-): Promise<string> {
-  const tokenUrl = `${baseUrl}/auth/token`
-  const res = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ access_key: accessKey, secret_key: secretKey }),
+async function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseAnonKey) return null
+
+  const cookieStore = await cookies()
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() { return cookieStore.getAll() },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          try { cookieStore.set(name, value, options) } catch {}
+        })
+      },
+    },
   })
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => 'Unknown auth error')
-    throw new Error(`SenseTime auth failed: ${res.status} ${errText}`)
-  }
-
-  const data = await res.json()
-  const token = data.access_token || data.token || data.data?.access_token
-  if (!token) throw new Error('No access token in SenseTime response')
-  return token
 }
 
 /**
  * POST /api/generate
- * Generate a drama script using the SenseTime (OpenAI-compatible) API.
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-
-    // Validate input
     const parsed = generationRequestSchema.parse(body)
     const { genres, episodeCount, generationType, locale, additionalInstructions } = parsed
 
-    // Rate limiting: check daily usage from localStorage-style tracking via fetching user stats
-    // This is a basic check — production should use a proper DB
-    const usageRes = await fetch(
-      `${request.url?.replace('/api/generate', '')}/api/user/paid`
-    ).catch(() => null)
-
-    let isPaid = false
-    if (usageRes && usageRes.ok) {
-      const usageData = await usageRes.json()
-      isPaid = usageData.paid === true
+    // ── Authenticate user ──
+    const supabase = await getSupabase()
+    let user = null
+    if (supabase) {
+      const { data } = await supabase.auth.getUser()
+      user = data?.user
     }
 
-    if (!isPaid) {
-      // Enforce free tier daily limit
-      return NextResponse.json(
-        { error: 'Daily limit reached. Please upgrade to continue generating.' },
-        { status: 429 }
-      )
+    // ── Check daily limit (free users) ──
+    if (user) {
+      const meta = user.user_metadata || {}
+      const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+      const genDate = meta.daily_gen_date
+      const genCount = (meta.daily_gen_count as number) || 0
+
+      // Reset counter if a new day
+      const dailyCount = genDate === today ? genCount : 0
+
+      const isPaid =
+        meta.paid === true || user.app_metadata?.paid === true || user.app_metadata?.role === 'pro'
+
+      if (!isPaid && dailyCount >= DAILY_FREE_LIMIT) {
+        return NextResponse.json(
+          { error: `Daily limit reached. Free users get ${DAILY_FREE_LIMIT} generations/day. Upgrade to continue.` },
+          { status: 429 }
+        )
+      }
     }
 
-    // Build prompts
-    const systemPrompt = buildGenerationPrompt({
-      genres,
-      episodeCount,
-      locale,
-    })
+    // ── Build prompts ──
+    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale })
+    const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
-    const userPrompt = buildUserPrompt({
-      genres,
-      episodeCount,
-      generationType,
-      additionalInstructions,
-    })
-
-    // OpenAI-compatible API call (SenseTime / token.sensenova.cn)
+    // ── Call AI API ──
     const baseUrl = process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1'
     const apiKey = process.env.OPENAI_API_KEY
     const model = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
 
     if (!apiKey) {
-      return NextResponse.json(
-        { error: 'AI service not configured' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
 
-    // Call chat completions directly (OpenAI-compatible format)
-    const chatUrl = `${baseUrl}/chat/completions`
-    const aiRes = await fetch(chatUrl, {
+    const aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model,
@@ -116,35 +106,26 @@ export async function POST(request: Request) {
     }
 
     const aiData = await aiRes.json()
-
-    // Extract content from response
     let content = ''
-    if (aiData.choices && aiData.choices.length > 0) {
+    if (aiData.choices?.length) {
       content = aiData.choices[0].message?.content || ''
-    } else if (aiData.data?.choices) {
+    } else if (aiData.data?.choices?.length) {
       content = aiData.data.choices[0].message?.content || ''
     }
 
     if (!content) {
-      return NextResponse.json(
-        { error: 'Empty response from AI' },
-        { status: 502 }
-      )
+      return NextResponse.json({ error: 'Empty response from AI' }, { status: 502 })
     }
 
-    // Try to parse JSON from the response
-    // The AI might wrap it in markdown code blocks
+    // ── Parse AI JSON response ──
     let jsonStr = content.trim()
     const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1].trim()
-    }
+    if (jsonMatch) jsonStr = jsonMatch[1].trim()
 
     let generationResponse
     try {
       generationResponse = JSON.parse(jsonStr)
     } catch {
-      // Try to find JSON object boundaries
       const firstBrace = jsonStr.indexOf('{')
       const lastBrace = jsonStr.lastIndexOf('}')
       if (firstBrace !== -1 && lastBrace > firstBrace) {
@@ -152,35 +133,44 @@ export async function POST(request: Request) {
           generationResponse = JSON.parse(jsonStr.slice(firstBrace, lastBrace + 1))
         } catch {
           return NextResponse.json(
-            {
-              title: '',
-              premise: content.slice(0, 200),
-              characters: [],
-              episodes: [],
-              characterArcs: [],
-              error: 'Failed to parse AI response as JSON',
-              rawContent: content,
-            },
+            { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
             { status: 502 }
           )
         }
       } else {
         return NextResponse.json(
-          {
-            title: '',
-            premise: content.slice(0, 200),
-            characters: [],
-            episodes: [],
-            characterArcs: [],
-            error: 'Failed to parse AI response as JSON',
-            rawContent: content,
-          },
+          { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
           { status: 502 }
         )
       }
     }
 
-    // Validate response structure
+    // ── Increment daily counter ──
+    if (user && supabase) {
+      const meta = user.user_metadata || {}
+      const today = new Date().toISOString().slice(0, 10)
+      const genDate = meta.daily_gen_date
+      const genCount = (meta.daily_gen_count as number) || 0
+      const dailyCount = genDate === today ? genCount : 0
+
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (serviceRoleKey) {
+        const serviceClient = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          serviceRoleKey,
+          { cookies: { getAll() { return [] }, setAll() {} }, auth: { persistSession: false } }
+        )
+        await serviceClient.auth.admin.updateUserById(user.id, {
+          user_metadata: {
+            ...meta,
+            daily_gen_date: today,
+            daily_gen_count: dailyCount + 1,
+          },
+        })
+      }
+    }
+
+    // ── Return result ──
     const response = {
       title: generationResponse.title || 'Untitled Drama',
       premise: generationResponse.premise || '',
@@ -188,16 +178,11 @@ export async function POST(request: Request) {
       episodes: generationResponse.episodes || [],
       characterArcs: generationResponse.characterArcs || [],
     }
-
     return NextResponse.json(response)
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid request: ' + error.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid request: ' + error.message }, { status: 400 })
     }
-
     console.error('Generation error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
