@@ -32,7 +32,7 @@ async function getAccessToken(
 
 /**
  * POST /api/generate
- * Generate a drama script using the SenseTime API.
+ * Generate a drama script using the SenseTime (OpenAI-compatible) API.
  */
 export async function POST(request: Request) {
   try {
@@ -76,29 +76,25 @@ export async function POST(request: Request) {
       additionalInstructions,
     })
 
-    // SenseTime API call
-    const baseUrl = process.env.SENSENOVA_BASE_URL || 'https://token.sensenova.cn/v1'
-    const accessKey = process.env.SENSENOVA_ACCESS_KEY
-    const secretKey = process.env.SENSENOVA_SECRET_KEY
-    const model = process.env.SENSENOVA_MODEL || 'sensenova-6.7-flash-lite'
+    // OpenAI-compatible API call (SenseTime / token.sensenova.cn)
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1'
+    const apiKey = process.env.OPENAI_API_KEY
+    const model = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
 
-    if (!accessKey || !secretKey) {
+    if (!apiKey) {
       return NextResponse.json(
         { error: 'AI service not configured' },
         { status: 500 }
       )
     }
 
-    // Get access token
-    const accessToken = await getAccessToken(baseUrl, accessKey, secretKey)
-
-    // Call chat completions
+    // Call chat completions directly (OpenAI-compatible format)
     const chatUrl = `${baseUrl}/chat/completions`
     const aiRes = await fetch(chatUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model,
