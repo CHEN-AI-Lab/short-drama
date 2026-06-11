@@ -27,7 +27,9 @@
     "choosePlan": "选择最适合你的方案",
     "episodeCountLabel": "集数",
     "additionalInstructions": "额外指令（可选）",
-    "history": "历史记录"
+    "history": "历史记录",
+    "navGenerate": "生成",
+    "navHistory": "历史"
   },
   "home": {
     "title": "输入题材，AI 自动生成短剧剧本",

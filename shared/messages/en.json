@@ -27,7 +27,9 @@
     "choosePlan": "Choose the plan that fits your creative needs",
     "episodeCountLabel": "Episode Count",
     "additionalInstructions": "Additional Instructions (optional)",
-    "history": "History"
+    "history": "History",
+    "navGenerate": "Generate",
+    "navHistory": "History"
   },
   "home": {
     "title": "Enter genres, AI generates short drama scripts automatically",

@@ -42,13 +42,13 @@ export default async function LocaleLayout({ children, params }: Props) {
                   href={`/${locale}`}
                   className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                 >
-                  生成
+                  {t('navGenerate')}
                 </Link>
                 <Link
                   href={`/${locale}/history`}
                   className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                 >
-                  历史
+                  {t('navHistory')}
                 </Link>
                 <Link
                   href={`/${locale}/pricing`}
