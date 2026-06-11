@@ -22,7 +22,7 @@ export const GENERATION_TYPES: GenerationTypeInfo[] = [
   { key: 'full_script', labelZh: '完整剧本', labelEn: 'Full Script', icon: '📝' },
 ]
 
-export const EPISODE_COUNTS: EpisodeCount[] = [20, 30, 50, 80, 100]
+export const EPISODE_COUNTS: EpisodeCount[] = [5, 10, 20, 30, 50, 80, 100]
 
 export const CHARACTER_ARCHETYPES = {
   protagonist: ['坚强', '聪明', '成长', '善良', '勇敢'],

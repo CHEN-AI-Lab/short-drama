@@ -72,7 +72,7 @@ export function buildGenerationPrompt(
 ## 创作要求
 1. 题材：${genreList}
 2. **集数：必须严格生成 ${episodeCount} 集，不能多不能少**
-3. 每集包含 3-5 个场景
+3. 每集包含 ${episodeCount <= 10 ? '5-8' : '3-5'} 个场景
 4. 剧情要有悬念和反转，节奏紧凑
 5. 角色性格鲜明，有成长弧光
 6. 每集结尾要有悬念钩子，吸引观众看下一集

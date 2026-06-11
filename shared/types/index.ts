@@ -7,7 +7,7 @@ export type DramaGenre =
 
 export type GenerationType = 'outline' | 'scene' | 'character' | 'full_script'
 
-export type EpisodeCount = 20 | 30 | 50 | 80 | 100
+export type EpisodeCount = 5 | 10 | 20 | 30 | 50 | 80 | 100
 
 export interface Character {
   name: string

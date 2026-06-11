@@ -41,7 +41,7 @@ export default function DramaGenerator() {
 
   // ── State ──
   const [selectedGenres, setSelectedGenres] = useState<DramaGenre[]>([])
-  const [episodeCount, setEpisodeCount] = useState<EpisodeCount>(50)
+  const [episodeCount, setEpisodeCount] = useState<EpisodeCount>(10)
   const [generationType, setGenerationType] = useState<GenerationType>('outline')
   const [additionalInstructions, setAdditionalInstructions] = useState('')
   const [loading, setLoading] = useState(false)
@@ -258,63 +258,48 @@ export default function DramaGenerator() {
         </p>
       </Section>
 
-      {/* Generate button — always visible */}
+      {/* Generate button — transforms into loading state */}
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 md:p-6 shadow-sm text-center">
-        <Button
-          variant="gradient"
-          size="lg"
-          disabled={selectedGenres.length === 0 || loading}
-          loading={loading}
-          onClick={handleGenerate}
-          className="whitespace-nowrap min-w-[220px] shadow-lg shadow-purple-500/20"
-        >
-          {ct('generate')}
-        </Button>
-
-        {!loading && !result && (
-          <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-            {selectedGenres.length === 0
-              ? (locale === 'zh-CN' ? '请先选择 1-3 个题材' : 'Select 1-3 genres first')
-              : (locale === 'zh-CN' ? '已准备就绪，点击生成' : 'Ready, click to generate')}
-          </p>
-        )}
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-20 space-y-6">
-          {/* Animated writing icon */}
-          <div className="relative w-20 h-20">
-            {/* Pulse ring */}
-            <div className="absolute inset-0 rounded-full bg-indigo-100 dark:bg-indigo-900/40 animate-ping opacity-30" />
-            {/* Icon circle */}
-            <div className="absolute inset-1 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <svg
-                className="w-9 h-9 text-white animate-bounce"
-                style={{ animationDuration: '1.2s' }}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
+        {loading ? (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-2 border-indigo-200 dark:border-indigo-800" />
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-500 animate-spin" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
+                {locale === 'zh-CN' ? '正在生成剧本' : 'Generating script'}
+                <span className="inline-block animate-pulse ml-0.5">.</span>
+                <span className="inline-block animate-pulse ml-0.5" style={{ animationDelay: '0.15s' }}>.</span>
+                <span className="inline-block animate-pulse ml-0.5" style={{ animationDelay: '0.3s' }}>.</span>
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                {locale === 'zh-CN' ? 'AI 正在创作中，请稍候...' : 'AI is creating, please wait...'}
+              </p>
             </div>
           </div>
-          {/* Animated text */}
-          <div className="text-center space-y-2">
-            <p className="text-lg font-semibold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-              {ct('loading')}
-            </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">
-              <span className="inline-block animate-pulse" style={{ animationDelay: '0s' }}>.</span>
-              <span className="inline-block animate-pulse" style={{ animationDelay: '0.2s' }}>.</span>
-              <span className="inline-block animate-pulse" style={{ animationDelay: '0.4s' }}>.</span>
-              <span className="inline-block animate-pulse" style={{ animationDelay: '0.6s' }}>.</span>
-            </p>
-          </div>
-        </div>
-      )}
+        ) : (
+          <>
+            <Button
+              variant="gradient"
+              size="lg"
+              disabled={selectedGenres.length === 0}
+              onClick={handleGenerate}
+              className="whitespace-nowrap min-w-[220px] shadow-lg shadow-purple-500/20"
+            >
+              {ct('generate')}
+            </Button>
+
+            {!result && (
+              <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+                {selectedGenres.length === 0
+                  ? (locale === 'zh-CN' ? '请先选择 1-3 个题材' : 'Select 1-3 genres first')
+                  : (locale === 'zh-CN' ? '已准备就绪，点击生成' : 'Ready, click to generate')}
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Error */}
       {error && !loading && (

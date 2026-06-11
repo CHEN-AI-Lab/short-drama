@@ -74,7 +74,11 @@ export default function HistoryPage() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 card-hover"
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 card-hover cursor-pointer"
+              onClick={() => handleRegenerate(item.genres, item.episodeCount)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleRegenerate(item.genres, item.episodeCount)}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
