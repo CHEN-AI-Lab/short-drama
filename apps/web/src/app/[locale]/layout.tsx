@@ -4,6 +4,7 @@ import { AuthProvider } from '../../components/AuthProvider'
 import ThemeToggle from '../../components/ThemeToggle'
 import LanguageSwitcher from '../../components/LanguageSwitcher'
 import UserMenu from '../../components/UserMenu'
+import NavLink from '../../components/NavLink'
 import Link from 'next/link'
 
 import type { ReactNode } from 'react'
@@ -37,25 +38,22 @@ export default async function LocaleLayout({ children, params }: Props) {
               </Link>
 
               {/* Nav links */}
-              <nav className="hidden sm:flex items-center gap-5">
-                <Link
-                  href={`/${locale}`}
-                  className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  {t('navGenerate')}
-                </Link>
-                <Link
-                  href={`/${locale}/history`}
-                  className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  {t('navHistory')}
-                </Link>
-                <Link
-                  href={`/${locale}/pricing`}
-                  className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-                >
-                  {t('pricing')}
-                </Link>
+              <nav className="hidden sm:flex items-center gap-6">
+                <span className="relative">
+                  <NavLink href={`/${locale}`}>
+                    {t('navGenerate')}
+                  </NavLink>
+                </span>
+                <span className="relative">
+                  <NavLink href={`/${locale}/history`}>
+                    {t('navHistory')}
+                  </NavLink>
+                </span>
+                <span className="relative">
+                  <NavLink href={`/${locale}/pricing`}>
+                    {t('pricing')}
+                  </NavLink>
+                </span>
               </nav>
             </div>
 

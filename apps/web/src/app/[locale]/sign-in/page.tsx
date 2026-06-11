@@ -104,7 +104,7 @@ export default function SignInPage() {
               </p>
             )}
 
-            <Button type="submit" loading={loading} className="w-full">
+            <Button type="submit" variant="gradient" size="lg" loading={loading} className="w-full shadow-lg shadow-purple-500/20">
               {t('common.signIn')}
             </Button>
           </form>

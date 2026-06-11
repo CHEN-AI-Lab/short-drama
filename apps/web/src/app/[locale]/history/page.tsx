@@ -62,7 +62,13 @@ export default function HistoryPage() {
             <div
               key={item.id}
               className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 card-hover cursor-pointer"
-              onClick={() => router.push(`/${locale}`)}
+              onClick={() => {
+                const params = new URLSearchParams({
+                  genres: item.genres.join(','),
+                  episodes: String(item.episodeCount),
+                })
+                router.push(`/${locale}?${params.toString()}`)
+              }}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && router.push(`/${locale}`)}
