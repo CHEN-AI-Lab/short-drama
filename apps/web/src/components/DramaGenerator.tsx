@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
   GENRES,
@@ -10,6 +10,7 @@ import {
   generationRequestSchema,
 } from 'shared'
 import { generateDrama } from 'shared/api'
+import { useDramaHistory } from 'shared'
 import type {
   DramaGenre,
   EpisodeCount,
@@ -27,6 +28,7 @@ type ResultTab = 'characters' | 'episodes' | 'characterArcs'
 
 export default function DramaGenerator() {
   const params = useParams()
+  const router = useRouter()
   const locale = (params.locale as string) || 'zh-CN'
   const t = useTranslations('home')
   const ct = useTranslations('common')
@@ -34,6 +36,7 @@ export default function DramaGenerator() {
   const gt = useTranslations('genres')
   const gtt = useTranslations('generationTypes')
   const et = useTranslations('errors')
+  const { addItem } = useDramaHistory()
 
   // ── State ──
   const [selectedGenres, setSelectedGenres] = useState<DramaGenre[]>([])
@@ -83,6 +86,14 @@ export default function DramaGenerator() {
       } else {
         setResult(res)
         setActiveTab('characters')
+        // Save to history
+        addItem({
+          genres: selectedGenres,
+          title: res.title,
+          premise: res.premise,
+          episodeCount,
+          locale,
+        })
       }
     } catch (err) {
       setError(
@@ -97,10 +108,48 @@ export default function DramaGenerator() {
   const getGenreIcon = (genre: DramaGenre): string =>
     GENRES.find((g: GenreInfo) => g.key === genre)?.icon || ''
 
+  // ── Export helpers ──
+  const formatScriptAsText = (r: GenerationResponse): string => {
+    const lines: string[] = []
+    lines.push(`《${r.title}》`)
+    lines.push('='.repeat(30))
+    lines.push('')
+    lines.push(r.premise)
+    lines.push('')
+    lines.push('── 角色 ──')
+    r.characters.forEach((c) => {
+      lines.push(`  ${c.name}（${c.role}）: ${c.personality.join(', ')}`)
+    })
+    lines.push('')
+    lines.push('── 分集 ──')
+    r.episodes.forEach((ep) => {
+      lines.push(`  第${ep.episode}集: ${ep.title}`)
+      lines.push(`    ${ep.synopsis}`)
+    })
+    lines.push('')
+    lines.push('── 人物弧光 ──')
+    r.characterArcs.forEach((arc) => {
+      lines.push(`  ${arc.character.name}: → ${arc.finalState}`)
+    })
+    return lines.join('\n')
+  }
+
+  const downloadTxt = (r: GenerationResponse) => {
+    const text = formatScriptAsText(r)
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${r.title || 'script'}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // ── Section wrapper ──
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 md:p-6 shadow-sm">
-      <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">
+    <section className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 md:p-6 shadow-sm card-hover">
+      <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+        <span className="w-1 h-4 rounded-full bg-gradient-to-b from-indigo-500 to-purple-500" />
         {title}
       </h2>
       {children}
@@ -198,6 +247,7 @@ export default function DramaGenerator() {
           disabled={selectedGenres.length === 0 || loading}
           loading={loading}
           onClick={handleGenerate}
+          className="whitespace-nowrap min-w-[200px]"
         >
           {ct('generate')}
         </Button>
@@ -308,8 +358,11 @@ export default function DramaGenerator() {
             )}
           </div>
 
-          {/* Regenerate */}
-          <div className="flex justify-center pt-4">
+          {/* Actions */}
+          <div className="flex justify-center gap-3 pt-4">
+            <Button variant="ghost" size="md" onClick={() => downloadTxt(result)}>
+              {locale === 'zh-CN' ? '📥 下载 TXT' : '📥 Download TXT'}
+            </Button>
             <Button variant="outline" size="md" onClick={() => setResult(null)}>
               {ot('generateAgain')}
             </Button>

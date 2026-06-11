@@ -1,42 +1,77 @@
 import { NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/checkout
- * Create a Creem payment checkout.
- *
- * In production, this would call the Creem API to create a checkout session.
- * For now, it returns a placeholder URL.
+ * Create a Creem payment checkout session.
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    // In production, you would:
-    // 1. Call Creem API to create a checkout session
-    // 2. Return the hosted checkout URL
-    //
-    // Example (when Creem API is configured):
-    // const creemRes = await fetch('https://api.creem.io/v1/checkout', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'X-API-KEY': process.env.CREEM_API_KEY!,
-    //   },
-    //   body: JSON.stringify({
-    //     product_id: process.env.CREEM_PRO_PRODUCT_ID,
-    //     success_url: `${origin}/success`,
-    //     cancel_url: `${origin}/pricing`,
-    //   }),
-    // })
-    // const data = await creemRes.json()
-    // return NextResponse.json({ url: data.checkout_url })
+    const origin = new URL(request.url).origin
 
-    // Placeholder: return a mock success URL
-    // The frontend will redirect to the success page
+    // ── Authenticate user ──
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json({ error: 'Auth service not configured' }, { status: 500 })
+    }
+
+    const cookieStore = await cookies()
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            try { cookieStore.set(name, value, options) } catch {}
+          })
+        },
+      },
+    })
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Please sign in first' }, { status: 401 })
+    }
+
+    // ── Verify Creem credentials ──
+    const creemApiKey = process.env.CREEM_API_KEY
+    const productId = process.env.CREEM_PRODUCT_ID
+    if (!creemApiKey || !productId) {
+      return NextResponse.json({ error: 'Payment service not configured' }, { status: 500 })
+    }
+
+    // ── Create Creem checkout session ──
+    const creemRes = await fetch('https://api.creem.io/v1/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': creemApiKey,
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        success_url: `${origin}/${user.user_metadata?.locale || 'zh-CN'}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/${user.user_metadata?.locale || 'zh-CN'}/pricing`,
+        metadata: {
+          user_id: user.id,
+        },
+      }),
+    })
+
+    if (!creemRes.ok) {
+      const errText = await creemRes.text().catch(() => 'Unknown error')
+      console.error('Creem API error:', creemRes.status, errText)
+      return NextResponse.json({ error: 'Payment service temporarily unavailable' }, { status: 502 })
+    }
+
+    const data = await creemRes.json()
+
     return NextResponse.json({
-      url: '/success?session_id=mock_session_123',
-      checkout_url: null,
+      url: data.checkout_url || data.url,
+      checkout_url: data.checkout_url || data.url,
     })
   } catch (error) {
     console.error('Checkout error:', error)

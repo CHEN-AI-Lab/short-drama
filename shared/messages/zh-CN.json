@@ -24,10 +24,11 @@
     "retry": "重试",
     "getStarted": "开始使用",
     "popular": "热门",
-     "choosePlan": "选择最适合你的方案",
-     "episodeCountLabel": "集数",
-     "additionalInstructions": "额外指令（可选）"
-    },
+    "choosePlan": "选择最适合你的方案",
+    "episodeCountLabel": "集数",
+    "additionalInstructions": "额外指令（可选）",
+    "history": "历史记录"
+  },
   "home": {
     "title": "输入题材，AI 自动生成短剧剧本",
     "subtitle": "支持霸总、穿越、甜宠、仙侠等主流题材，一键生成完整剧本",
@@ -153,5 +154,12 @@
     "somethingWrong": "出错了",
     "verificationFailed": "无法验证你的支付，请联系客服。",
     "returnHome": "返回首页"
+  },
+  "history": {
+    "title": "历史记录",
+    "subtitle": "查看你之前生成的剧本",
+    "empty": "还没有生成记录，去生成一个剧本吧",
+    "clearAll": "清空所有记录",
+    "untitled": "未命名剧本"
   }
 }
