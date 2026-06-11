@@ -18,6 +18,7 @@ import type {
   GenerationResponse,
   GenreInfo,
   GenerationTypeInfo,
+  HistoryItem,
 } from 'shared'
 import { GenrePill, Button, Card, CardContent, Badge } from 'ui'
 import CharacterList from './CharacterList'
@@ -53,6 +54,28 @@ export default function DramaGenerator() {
   useEffect(() => {
     const genreStr = searchParams.get('genres')
     const epStr = searchParams.get('episodes')
+    const historyId = searchParams.get('historyId')
+
+    // First priority: restore full result from history
+    if (historyId) {
+      const raw = localStorage.getItem('short_drama_history')
+      if (raw) {
+        try {
+          const items: HistoryItem[] = JSON.parse(raw)
+          const found = items.find((i) => i.id === historyId)
+          if (found && found.result) {
+            setSelectedGenres(found.genres)
+            setEpisodeCount(found.episodeCount as EpisodeCount)
+            setResult(found.result)
+            setActiveTab('characters')
+            window.history.replaceState({}, '', `/${locale}`)
+            return
+          }
+        } catch { /* ignore parse errors */ }
+      }
+    }
+
+    // Fallback: restore genres/episode count for regeneration
     if (genreStr) {
       const restored = genreStr.split(',').filter((g) => GENRES.some((gi: GenreInfo) => gi.key === g)) as DramaGenre[]
       if (restored.length > 0) setSelectedGenres(restored)
@@ -112,6 +135,7 @@ export default function DramaGenerator() {
           premise: res.premise,
           episodeCount,
           locale,
+          result: res,
         })
       }
     } catch (err) {

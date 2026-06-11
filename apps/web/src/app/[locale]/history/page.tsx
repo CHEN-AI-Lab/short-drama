@@ -22,6 +22,10 @@ export default function HistoryPage() {
     router.push(`/${locale}?${sp.toString()}`)
   }
 
+  const handleView = (itemId: string) => {
+    router.push(`/${locale}?historyId=${itemId}`)
+  }
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
@@ -75,10 +79,10 @@ export default function HistoryPage() {
             <div
               key={item.id}
               className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 card-hover cursor-pointer"
-              onClick={() => handleRegenerate(item.genres, item.episodeCount)}
+              onClick={() => handleView(item.id)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handleRegenerate(item.genres, item.episodeCount)}
+              onKeyDown={(e) => e.key === 'Enter' && handleView(item.id)}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">

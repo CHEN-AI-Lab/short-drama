@@ -83,4 +83,6 @@ export interface HistoryItem {
   episodeCount: number
   locale: string
   timestamp: number
+  /** Full generation result stored for detail view */
+  result?: GenerationResponse
 }
