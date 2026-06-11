@@ -133,7 +133,7 @@ You MUST output in the following JSON structure:
 ## Creative Requirements
 1. Genres: ${genreList}
 2. Episode count: ${episodeCount}
-3. Each episode should contain 3-5 scenes
+3. Each episode should contain ${episodeCount <= 10 ? '5-8' : '3-5'} scenes
 4. Plot must have suspense and twists, with a tight pacing
 5. Characters must have distinct personalities and growth arcs
 6. Each episode must end with a cliffhanger to hook viewers for the next episode

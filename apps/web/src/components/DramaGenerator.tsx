@@ -314,7 +314,7 @@ export default function DramaGenerator() {
               {ct('generate')}
             </Button>
 
-            {!result && (
+            {!result && !loading && (
               <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
                 {selectedGenres.length === 0
                   ? (locale === 'zh-CN' ? '请先选择 1-3 个题材' : 'Select 1-3 genres first')

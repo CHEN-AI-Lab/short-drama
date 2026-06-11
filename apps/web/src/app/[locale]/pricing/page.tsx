@@ -100,7 +100,7 @@ export default function PricingPage() {
               </ul>
 
               <Link
-                href="/sign-up"
+                href={`/${locale}/sign-up`}
                 className="block w-full text-center px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 {t('common.getStarted')}

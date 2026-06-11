@@ -41,6 +41,17 @@ for e in envs_list:
     print(f"Deleted existing: {ek}")
 
 # Now set each env var
+# Map global.env keys to Vercel env var names
+aliases = {
+    "AI_API_KEY": "OPENAI_API_KEY",
+    "AI_BASE_URL": "OPENAI_BASE_URL",
+    "AI_MODEL": "OPENAI_MODEL",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+}
+for src_name, target_name in aliases.items():
+    if src_name in d and target_name not in d:
+        d[target_name] = d[src_name]
+
 env_vars = {
     "OPENAI_API_KEY": "encrypted",
     "OPENAI_BASE_URL": "plain",

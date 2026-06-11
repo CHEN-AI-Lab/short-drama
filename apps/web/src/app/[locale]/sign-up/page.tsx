@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button, Card, CardContent, Input } from 'ui'
 
@@ -10,6 +10,7 @@ export default function SignUpPage() {
   const t = useTranslations()
   const at = useTranslations('auth')
   const router = useRouter()
+  const params = useParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -127,7 +128,7 @@ export default function SignUpPage() {
               </p>
             )}
 
-            <Button type="submit" loading={loading} className="w-full">
+            <Button type="submit" variant="gradient" size="lg" loading={loading} className="w-full shadow-lg shadow-purple-500/20">
               {t('common.signUp')}
             </Button>
           </form>
@@ -173,7 +174,7 @@ export default function SignUpPage() {
           <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
             {at('hasAccount')}{' '}
             <Link
-              href="/sign-in"
+              href={`/${params.locale || 'zh-CN'}/sign-in`}
               className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
             >
               {t('common.signIn')}
