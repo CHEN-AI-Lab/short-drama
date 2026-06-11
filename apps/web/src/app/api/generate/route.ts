@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { generationRequestSchema, buildGenerationPrompt, buildUserPrompt } from 'shared'
+import type { Character, EpisodeOutline, CharacterArc } from 'shared'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -171,13 +172,80 @@ export async function POST(request: Request) {
       }
     }
 
+    // ── Transform AI response to match frontend types ──
+    const normalizePersonality = (val: unknown): string[] => {
+      if (Array.isArray(val)) return val.filter(Boolean)
+      if (typeof val === 'string') return val.split(/[、，,]/).map((s) => s.trim()).filter(Boolean)
+      return []
+    }
+
+    const roleMap: Record<string, string> = {
+      '主角': 'protagonist', '反派': 'antagonist', '配角': 'supporting', '客串': 'minor',
+      'protagonist': 'protagonist', 'antagonist': 'antagonist', 'supporting': 'supporting', 'minor': 'minor',
+    }
+
+    const normalizeRole = (role: unknown): string => roleMap[String(role || '').toLowerCase()] || 'supporting'
+
+    const normalizeCharacters = (chars: unknown[]): Character[] =>
+      (chars || []).map((c: any) => ({
+        name: c.name || 'Unknown',
+        age: c.age ? String(c.age) : undefined,
+        personality: normalizePersonality(c.personality),
+        background: c.background || '',
+        arc: c.arc || '',
+        role: normalizeRole(c.role) as Character['role'],
+        relationships: typeof c.relationship === 'string'
+          ? [{ name: c.relationship.split(/[、，,]/)[0] || '', relation: c.relationship }]
+          : Array.isArray(c.relationships) ? c.relationships : [],
+      }))
+
+    const normalizeEpisodes = (eps: unknown[]): EpisodeOutline[] =>
+      (eps || []).map((ep: any, i: number) => ({
+        episode: ep.episode || ep.episodeNumber || i + 1,
+        title: ep.title || '',
+        synopsis: ep.synopsis || ep.summary || '',
+        scenes: (ep.scenes || []).map((s: any) => ({
+          title: s.title || '',
+          location: s.location || '',
+          characters: (s.characters || []).map((ch: any) =>
+            typeof ch === 'string' ? { name: ch, emotion: '' } : { name: ch.name || '', emotion: ch.emotion || '' }
+          ),
+          description: s.description || '',
+          keyDialogue: s.keyDialogue || s.dialogue || [],
+          duration: s.duration || '',
+        })),
+        hook: ep.hook || '',
+      }))
+
+    const normalizeArcs = (arcs: unknown[], chars: Character[]): CharacterArc[] =>
+      (arcs || []).map((arc: any, i: number) => ({
+        character: chars.find((c) => c.name === (arc.character?.name || arc.name)) || {
+          name: arc.character?.name || arc.name || `Character ${i + 1}`,
+          personality: normalizePersonality(arc.character?.personality),
+          background: arc.character?.background || '',
+          arc: arc.arc || '',
+          role: normalizeRole(arc.character?.role) as Character['role'],
+          relationships: [],
+        },
+        episodes: Array.isArray(arc.episodes)
+          ? arc.episodes.map((ep: any) => ({ episode: ep.episode || 0, change: ep.change || '' }))
+          : typeof arc.arc === 'string'
+            ? [{ episode: 1, change: arc.arc }]
+            : [],
+        finalState: arc.finalState || '',
+      }))
+
     // ── Return result ──
+    const characters: Character[] = normalizeCharacters(generationResponse.characters)
+    const episodes: EpisodeOutline[] = normalizeEpisodes(generationResponse.episodes)
+    const characterArcs: CharacterArc[] = normalizeArcs(generationResponse.characterArcs || generationResponse.character_arcs, characters)
+
     const response = {
       title: generationResponse.title || 'Untitled Drama',
       premise: generationResponse.premise || '',
-      characters: generationResponse.characters || [],
-      episodes: generationResponse.episodes || [],
-      characterArcs: generationResponse.characterArcs || [],
+      characters,
+      episodes,
+      characterArcs,
     }
     return NextResponse.json(response)
   } catch (error) {
