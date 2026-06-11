@@ -238,14 +238,28 @@ export async function POST(request: Request) {
     // ── Return result ──
     const characters: Character[] = normalizeCharacters(generationResponse.characters)
     const episodes: EpisodeOutline[] = normalizeEpisodes(generationResponse.episodes)
+
+    // Enforce episode count — trim or pad to match user selection
+    const targetCount = episodeCount
+    const trimmedEpisodes = episodes.slice(0, targetCount)
+    // Renumber episodes sequentially
+    const renumberedEpisodes = trimmedEpisodes.map((ep, i) => ({ ...ep, episode: i + 1 }))
+
     const characterArcs: CharacterArc[] = normalizeArcs(generationResponse.characterArcs || generationResponse.character_arcs, characters)
+    // Fix arc episode references to match renumbered episodes
+    const fixedArcs = characterArcs.map((arc) => ({
+      ...arc,
+      episodes: arc.episodes
+        .filter((ep) => ep.episode <= targetCount)
+        .map((ep) => ({ ...ep })),
+    }))
 
     const response = {
       title: generationResponse.title || 'Untitled Drama',
       premise: generationResponse.premise || '',
       characters,
-      episodes,
-      characterArcs,
+      episodes: renumberedEpisodes,
+      characterArcs: fixedArcs,
     }
     return NextResponse.json(response)
   } catch (error) {

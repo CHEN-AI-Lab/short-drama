@@ -26,19 +26,27 @@ export default async function LocaleLayout({ children, params }: Props) {
         <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
         {/* Header */}
-        <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
-          <div className="max-w-5xl mx-auto flex items-center justify-between px-4 h-14">
-            {/* Logo */}
-            <div className="flex items-center gap-6">
+        <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-sm">
+          <div className="max-w-5xl mx-auto flex items-center justify-between px-4 h-16">
+            {/* Left: Logo + Nav */}
+            <div className="flex items-center gap-8">
               <Link
                 href={`/${locale}`}
-                className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent hover:from-indigo-400 hover:to-purple-500 transition-all"
+                className="flex items-center gap-2 text-lg font-bold"
               >
-                {t('appName')}
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm shadow-md">
+                  🎬
+                </span>
+                <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+                  {t('appName')}
+                </span>
               </Link>
 
+              {/* Vertical divider */}
+              <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700" />
+
               {/* Nav links */}
-              <nav className="hidden sm:flex items-center gap-6">
+              <nav className="hidden sm:flex items-center gap-1">
                 <span className="relative">
                   <NavLink href={`/${locale}`}>
                     {t('navGenerate')}
@@ -57,8 +65,8 @@ export default async function LocaleLayout({ children, params }: Props) {
               </nav>
             </div>
 
-            {/* Right section */}
-            <div className="flex items-center gap-2">
+            {/* Right: Actions */}
+            <div className="flex items-center gap-1 sm:gap-2">
               <LanguageSwitcher />
               <ThemeToggle />
               <UserMenu />

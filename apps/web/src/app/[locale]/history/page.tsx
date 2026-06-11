@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useParams, useRouter } from 'next/navigation'
 import { useDramaHistory } from 'shared'
+import { Button } from 'ui'
 
 export default function HistoryPage() {
   const params = useParams()
@@ -10,7 +11,16 @@ export default function HistoryPage() {
   const locale = (params.locale as string) || 'zh-CN'
   const t = useTranslations('common')
   const ht = useTranslations('history')
+  const gt = useTranslations('genres')
   const { items, clearAll } = useDramaHistory()
+
+  const handleRegenerate = (genres: string[], episodeCount: number) => {
+    const sp = new URLSearchParams({
+      genres: genres.join(','),
+      episodes: String(episodeCount),
+    })
+    router.push(`/${locale}?${sp.toString()}`)
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -49,9 +59,12 @@ export default function HistoryPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
             </svg>
           </div>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
             {ht('empty')}
           </p>
+          <Button variant="outline" onClick={() => router.push(`/${locale}`)}>
+            {locale === 'zh-CN' ? '去生成第一条剧本' : 'Go create your first script'}
+          </Button>
         </div>
       )}
 
@@ -61,20 +74,10 @@ export default function HistoryPage() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 card-hover cursor-pointer"
-              onClick={() => {
-                const params = new URLSearchParams({
-                  genres: item.genres.join(','),
-                  episodes: String(item.episodeCount),
-                })
-                router.push(`/${locale}?${params.toString()}`)
-              }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && router.push(`/${locale}`)}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 card-hover"
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                     {item.title || ht('untitled')}
                   </h3>
@@ -88,6 +91,27 @@ export default function HistoryPage() {
                     <span>·</span>
                     <span className="text-indigo-500">{item.genres.length} {locale === 'zh-CN' ? '题材' : 'genres'}</span>
                   </div>
+                  {/* Genre tags */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {item.genres.map((g) => (
+                      <span
+                        key={g}
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800"
+                      >
+                        {gt(g)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Action buttons */}
+                <div className="flex flex-col gap-2 shrink-0">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleRegenerate(item.genres, item.episodeCount)}
+                  >
+                    {locale === 'zh-CN' ? '重新生成' : 'Regenerate'}
+                  </Button>
                 </div>
               </div>
             </div>

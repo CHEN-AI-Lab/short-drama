@@ -258,18 +258,26 @@ export default function DramaGenerator() {
         </p>
       </Section>
 
-      {/* Generate button */}
-      <div className="flex justify-center pt-2">
+      {/* Generate button — always visible */}
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 md:p-6 shadow-sm text-center">
         <Button
           variant="gradient"
           size="lg"
           disabled={selectedGenres.length === 0 || loading}
           loading={loading}
           onClick={handleGenerate}
-          className="whitespace-nowrap min-w-[200px]"
+          className="whitespace-nowrap min-w-[220px] shadow-lg shadow-purple-500/20"
         >
           {ct('generate')}
         </Button>
+
+        {!loading && !result && (
+          <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+            {selectedGenres.length === 0
+              ? (locale === 'zh-CN' ? '请先选择 1-3 个题材' : 'Select 1-3 genres first')
+              : (locale === 'zh-CN' ? '已准备就绪，点击生成' : 'Ready, click to generate')}
+          </p>
+        )}
       </div>
 
       {/* Loading */}
@@ -407,31 +415,6 @@ export default function DramaGenerator() {
             </Button>
           </div>
         </section>
-      )}
-
-      {/* No result placeholder */}
-      {!result && !loading && !error && (
-        <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 mb-5">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-8 h-8 text-indigo-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"
-              />
-            </svg>
-          </div>
-          <p className="text-gray-500 dark:text-gray-400">
-            {t('noResult')}
-          </p>
-        </div>
       )}
     </div>
   )

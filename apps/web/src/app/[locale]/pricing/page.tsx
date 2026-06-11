@@ -109,9 +109,9 @@ export default function PricingPage() {
           </Card>
 
           {/* Pro Plan */}
-          <Card className="relative flex flex-col ring-2 ring-purple-500 dark:ring-purple-400 overflow-hidden hover:shadow-xl transition-shadow duration-200">
+          <Card className="relative flex flex-col ring-2 ring-purple-500 dark:ring-purple-400 hover:shadow-xl transition-shadow duration-200">
             {/* Decorative gradient bg */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-50/60 via-white to-pink-50/60 dark:from-purple-950/30 dark:via-gray-900 dark:to-pink-950/30 pointer-events-none" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-50/60 via-white to-pink-50/60 dark:from-purple-950/30 dark:via-gray-900 dark:to-pink-950/30 pointer-events-none" />
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -119,7 +119,7 @@ export default function PricingPage() {
               {t('common.popular')}
             </div>
 
-            <CardContent className="flex-1 flex flex-col relative z-0">
+            <CardContent className="flex-1 flex flex-col relative z-0 pt-8">
               <div className="mb-6">
                 <div className="text-4xl mb-3">🚀</div>
                 <h2 className="text-xl font-bold mb-1">
