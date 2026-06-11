@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
 
-    const aiRes = await fetch(`${baseUrl}/chat/completions`, {
+    let aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -101,10 +101,42 @@ export async function POST(request: Request) {
 
     if (!aiRes.ok) {
       const errText = await aiRes.text().catch(() => 'Unknown AI error')
-      return NextResponse.json(
-        { error: `AI API error: ${aiRes.status} ${errText}` },
-        { status: 502 }
-      )
+
+      // 429 rate limit — retry once with backoff
+      if (aiRes.status === 429) {
+        await new Promise((r) => setTimeout(r, 3000))
+        const retryRes = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            max_tokens: 4096,
+            temperature: 0.7,
+          }),
+          signal: AbortSignal.timeout(60000),
+        })
+        if (retryRes.ok) {
+          aiRes = retryRes
+        } else {
+          const retryErr = await retryRes.text().catch(() => 'Retry failed')
+          return NextResponse.json(
+            { error: `AI 服务繁忙，请稍后再试 (${retryRes.status})` },
+            { status: 502 }
+          )
+        }
+      } else {
+        return NextResponse.json(
+          { error: `AI API error: ${aiRes.status} ${errText}` },
+          { status: 502 }
+        )
+      }
     }
 
     const aiData = await aiRes.json()
