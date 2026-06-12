@@ -72,71 +72,67 @@ export async function POST(request: Request) {
     const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
-    // ── Call AI API ──
+    // ── Call AI API with fallback models ──
     const baseUrl = process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1'
     const apiKey = process.env.OPENAI_API_KEY
-    const model = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
+    const primaryModel = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
+    const fallbackModels = ['sensenova-6.7-flash', 'sensenova-4.0-flash', 'sensenova-4.0-turbo']
 
     if (!apiKey) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
 
-    let aiRes = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 4096,
-        temperature: 0.7,
-      }),
-      signal: AbortSignal.timeout(60000),
-    })
+    async function callModel(modelName: string): Promise<Response> {
+      return fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 4096,
+          temperature: 0.7,
+        }),
+        signal: AbortSignal.timeout(60000),
+      })
+    }
 
-    if (!aiRes.ok) {
-      const errText = await aiRes.text().catch(() => 'Unknown AI error')
+    const modelsToTry = [primaryModel, ...fallbackModels.filter((m) => m !== primaryModel)]
+    let aiRes: Response | null = null
+    let lastError = ''
 
-      // 429 rate limit — retry once with backoff
-      if (aiRes.status === 429) {
-        await new Promise((r) => setTimeout(r, 3000))
-        const retryRes = await fetch(`${baseUrl}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            max_tokens: 4096,
-            temperature: 0.7,
-          }),
-          signal: AbortSignal.timeout(60000),
-        })
-        if (retryRes.ok) {
-          aiRes = retryRes
-        } else {
-          const retryErr = await retryRes.text().catch(() => 'Retry failed')
-          return NextResponse.json(
-            { error: `AI 服务繁忙，请稍后再试 (${retryRes.status})` },
-            { status: 502 }
-          )
-        }
-      } else {
-        return NextResponse.json(
-          { error: `AI API error: ${aiRes.status} ${errText}` },
-          { status: 502 }
-        )
+    for (const modelName of modelsToTry) {
+      aiRes = await callModel(modelName)
+      if (aiRes.ok) break
+
+      const errText = await aiRes.text().catch(() => 'Unknown')
+
+      // Retry on rate limit (429) or engine unavailable (400/503)
+      if (aiRes.status === 429 || aiRes.status === 503 || (aiRes.status === 400 && errText.includes('engine'))) {
+        lastError = `Model ${modelName}: ${aiRes.status} ${errText.slice(0, 100)}`
+        console.warn(`AI model ${modelName} failed, trying next...`)
+        await new Promise((r) => setTimeout(r, 2000))
+        continue
       }
+
+      // Non-retryable error — fail immediately
+      lastError = errText.slice(0, 200)
+      return NextResponse.json(
+        { error: `AI API error: ${aiRes.status} ${errText.slice(0, 200)}` },
+        { status: 502 }
+      )
+    }
+
+    if (!aiRes || !aiRes.ok) {
+      return NextResponse.json(
+        { error: `AI 服务暂时不可用，请稍后再试。${lastError ? lastError.slice(0, 80) : ''}` },
+        { status: 502 }
+      )
     }
 
     const aiData = await aiRes.json()
