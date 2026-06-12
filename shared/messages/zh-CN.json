@@ -99,13 +99,13 @@
     "noAccount": "还没有账号？",
     "hasAccount": "已有账号？",
     "passwordMismatch": "两次密码不一致",
-    "passwordLength": "密码至少6位",
+    "passwordLength": "密码至少8位，需包含大小写字母和数字",
     "googleSignIn": "使用 Google 账号登录",
     "signOut": "退出登录",
     "emailPlaceholder": "you@example.com",
     "passwordPlaceholder": "输入密码",
     "confirmPasswordPlaceholder": "再次输入密码",
-    "passwordMinPlaceholder": "至少6位字符"
+    "passwordMinPlaceholder": "至少8位，含大小写字母+数字"
   },
   "pricing": {
     "free": "免费版",

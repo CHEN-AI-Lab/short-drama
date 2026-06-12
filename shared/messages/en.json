@@ -99,13 +99,13 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "passwordMismatch": "Passwords do not match",
-    "passwordLength": "Password must be at least 6 characters",
+    "passwordLength": "At least 8 characters with uppercase, lowercase & numbers",
     "googleSignIn": "Sign in with Google",
     "signOut": "Sign Out",
     "emailPlaceholder": "you@example.com",
     "passwordPlaceholder": "Enter your password",
     "confirmPasswordPlaceholder": "Re-enter your password",
-    "passwordMinPlaceholder": "At least 6 characters"
+    "passwordMinPlaceholder": "8+ chars, mixed case & numbers"
   },
   "pricing": {
     "free": "Free",

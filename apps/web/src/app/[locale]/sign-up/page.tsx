@@ -11,6 +11,7 @@ export default function SignUpPage() {
   const at = useTranslations('auth')
   const router = useRouter()
   const params = useParams()
+  const locale = (params.locale as string) || 'zh-CN'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -26,8 +27,15 @@ export default function SignUpPage() {
       return
     }
 
-    if (password.length < 6) {
-      setError(at('passwordLength'))
+    if (password.length < 8) {
+      setError(locale === 'zh-CN' ? '密码至少需要8位字符' : at('passwordLength'))
+      return
+    }
+
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      setError(locale === 'zh-CN'
+        ? '密码必须包含大小写字母和数字'
+        : 'Password must contain uppercase, lowercase letters and numbers')
       return
     }
 
@@ -109,7 +117,7 @@ export default function SignUpPage() {
               placeholder={at('passwordMinPlaceholder')}
               required
               autoComplete="new-password"
-              minLength={6}
+              minLength={8}
             />
 
             <Input
