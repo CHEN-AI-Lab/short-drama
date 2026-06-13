@@ -6,17 +6,14 @@ import type { Character, EpisodeOutline, CharacterArc } from 'shared'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 const DAILY_FREE_LIMIT = 3
 
-/**
- * Get Supabase server client with auth context.
- */
 async function getSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !supabaseAnonKey) return null
-
   const cookieStore = await cookies()
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -30,9 +27,6 @@ async function getSupabase() {
   })
 }
 
-/**
- * POST /api/generate
- */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -50,16 +44,12 @@ export async function POST(request: Request) {
     // ── Check daily limit (free users) ──
     if (user) {
       const meta = user.user_metadata || {}
-      const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+      const today = new Date().toISOString().slice(0, 10)
       const genDate = meta.daily_gen_date
       const genCount = (meta.daily_gen_count as number) || 0
-
-      // Reset counter if a new day
       const dailyCount = genDate === today ? genCount : 0
-
       const isPaid =
         meta.paid === true || user.app_metadata?.paid === true || user.app_metadata?.role === 'pro'
-
       if (!isPaid && dailyCount >= DAILY_FREE_LIMIT) {
         return NextResponse.json(
           { error: `Daily limit reached. Free users get ${DAILY_FREE_LIMIT} generations/day. Upgrade to continue.` },
@@ -98,81 +88,69 @@ export async function POST(request: Request) {
           max_tokens: 4096,
           temperature: 0.7,
         }),
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(9000),
       })
     }
 
     const modelsToTry = [primaryModel, ...fallbackModels.filter((m) => m !== primaryModel)]
-    let aiRes: Response | null = null
+    let generationResponse: any = null
     let lastError = ''
 
     for (const modelName of modelsToTry) {
-      aiRes = await callModel(modelName)
-      if (aiRes.ok) break
-
-      const errText = await aiRes.text().catch(() => 'Unknown')
-
-      // Retry on rate limit (429) or engine unavailable (400/503)
-      if (aiRes.status === 429 || aiRes.status === 503 || (aiRes.status === 400 && errText.includes('engine'))) {
-        lastError = `Model ${modelName}: ${aiRes.status} ${errText.slice(0, 100)}`
-        console.warn(`AI model ${modelName} failed, trying next...`)
-        await new Promise((r) => setTimeout(r, 2000))
+      let aiRes: Response
+      try {
+        aiRes = await callModel(modelName)
+      } catch (fetchErr) {
+        lastError = `Model ${modelName}: ${fetchErr instanceof Error ? fetchErr.message : 'timeout'}`
         continue
       }
 
-      // Non-retryable error — fail immediately
-      lastError = errText.slice(0, 200)
-      return NextResponse.json(
-        { error: `AI API error: ${aiRes.status} ${errText.slice(0, 200)}` },
-        { status: 502 }
-      )
+      if (!aiRes.ok) {
+        const errText = await aiRes.text().catch(() => '')
+        lastError = `Model ${modelName}: ${aiRes.status} ${errText.slice(0, 80)}`
+        continue
+      }
+
+      // Parse the AI response
+      const aiData = await aiRes.json()
+      let content = ''
+      if (aiData.choices?.length) {
+        content = aiData.choices[0].message?.content || ''
+      } else if (aiData.data?.choices?.length) {
+        content = aiData.data.choices[0].message?.content || ''
+      }
+
+      if (!content) continue
+
+      let jsonStr = content.trim()
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
+      if (jsonMatch) jsonStr = jsonMatch[1].trim()
+
+      try {
+        generationResponse = JSON.parse(jsonStr)
+        break // Success!
+      } catch {
+        const firstBrace = jsonStr.indexOf('{')
+        const lastBrace = jsonStr.lastIndexOf('}')
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          try {
+            generationResponse = JSON.parse(jsonStr.slice(firstBrace, lastBrace + 1))
+            break // Success!
+          } catch {
+            lastError = `Model ${modelName}: failed to parse JSON`
+            continue
+          }
+        }
+        lastError = `Model ${modelName}: no JSON in response`
+        continue
+      }
     }
 
-    if (!aiRes || !aiRes.ok) {
+    if (!generationResponse) {
       return NextResponse.json(
         { error: `AI 服务暂时不可用，请稍后再试。${lastError ? lastError.slice(0, 80) : ''}` },
         { status: 502 }
       )
-    }
-
-    const aiData = await aiRes.json()
-    let content = ''
-    if (aiData.choices?.length) {
-      content = aiData.choices[0].message?.content || ''
-    } else if (aiData.data?.choices?.length) {
-      content = aiData.data.choices[0].message?.content || ''
-    }
-
-    if (!content) {
-      return NextResponse.json({ error: 'Empty response from AI' }, { status: 502 })
-    }
-
-    // ── Parse AI JSON response ──
-    let jsonStr = content.trim()
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
-    if (jsonMatch) jsonStr = jsonMatch[1].trim()
-
-    let generationResponse
-    try {
-      generationResponse = JSON.parse(jsonStr)
-    } catch {
-      const firstBrace = jsonStr.indexOf('{')
-      const lastBrace = jsonStr.lastIndexOf('}')
-      if (firstBrace !== -1 && lastBrace > firstBrace) {
-        try {
-          generationResponse = JSON.parse(jsonStr.slice(firstBrace, lastBrace + 1))
-        } catch {
-          return NextResponse.json(
-            { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
-            { status: 502 }
-          )
-        }
-      } else {
-        return NextResponse.json(
-          { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
-          { status: 502 }
-        )
-      }
     }
 
     // ── Increment daily counter ──
@@ -182,7 +160,6 @@ export async function POST(request: Request) {
       const genDate = meta.daily_gen_date
       const genCount = (meta.daily_gen_count as number) || 0
       const dailyCount = genDate === today ? genCount : 0
-
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
       if (serviceRoleKey) {
         const serviceClient = createServerClient(
@@ -191,16 +168,12 @@ export async function POST(request: Request) {
           { cookies: { getAll() { return [] }, setAll() {} }, auth: { persistSession: false } }
         )
         await serviceClient.auth.admin.updateUserById(user.id, {
-          user_metadata: {
-            ...meta,
-            daily_gen_date: today,
-            daily_gen_count: dailyCount + 1,
-          },
+          user_metadata: { ...meta, daily_gen_date: today, daily_gen_count: dailyCount + 1 },
         })
       }
     }
 
-    // ── Transform AI response to match frontend types ──
+    // ── Transform AI response ──
     const normalizePersonality = (val: unknown): string[] => {
       if (Array.isArray(val)) return val.filter(Boolean)
       if (typeof val === 'string') return val.split(/[、，,]/).map((s) => s.trim()).filter(Boolean)
@@ -211,7 +184,6 @@ export async function POST(request: Request) {
       '主角': 'protagonist', '反派': 'antagonist', '配角': 'supporting', '客串': 'minor',
       'protagonist': 'protagonist', 'antagonist': 'antagonist', 'supporting': 'supporting', 'minor': 'minor',
     }
-
     const normalizeRole = (role: unknown): string => roleMap[String(role || '').toLowerCase()] || 'supporting'
 
     const normalizeCharacters = (chars: unknown[]): Character[] =>
@@ -257,60 +229,42 @@ export async function POST(request: Request) {
         },
         episodes: Array.isArray(arc.episodes)
           ? arc.episodes.map((ep: any) => ({ episode: ep.episode || 0, change: ep.change || '' }))
-          : typeof arc.arc === 'string'
-            ? [{ episode: 1, change: arc.arc }]
-            : [],
+          : typeof arc.arc === 'string' ? [{ episode: 1, change: arc.arc }] : [],
         finalState: arc.finalState || '',
       }))
 
     // ── Return result ──
     const characters: Character[] = normalizeCharacters(generationResponse.characters)
     const episodes: EpisodeOutline[] = normalizeEpisodes(generationResponse.episodes)
-
-    // Enforce episode count — trim or pad to match user selection
     const targetCount = episodeCount
     const trimmedEpisodes = episodes.slice(0, targetCount)
-    // Renumber episodes sequentially
     const renumberedEpisodes = trimmedEpisodes.map((ep, i) => ({ ...ep, episode: i + 1 }))
-
     const characterArcs: CharacterArc[] = normalizeArcs(generationResponse.characterArcs || generationResponse.character_arcs, characters)
-    // Fix arc episode references to match renumbered episodes
     const fixedArcs = characterArcs.map((arc) => ({
       ...arc,
-      episodes: arc.episodes
-        .filter((ep) => ep.episode <= targetCount)
-        .map((ep) => ({ ...ep })),
+      episodes: arc.episodes.filter((ep) => ep.episode <= targetCount).map((ep) => ({ ...ep })),
     }))
 
-    const response = {
+    return NextResponse.json({
       title: generationResponse.title || 'Untitled Drama',
       premise: generationResponse.premise || '',
       characters,
       episodes: renumberedEpisodes,
       characterArcs: fixedArcs,
-    }
-    return NextResponse.json(response)
+    })
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json({ error: 'Invalid request: ' + error.message }, { status: 400 })
     }
-
-    // Handle AbortError / timeout
     const err = error as Error
     if (err.name === 'AbortError') {
       return NextResponse.json({ error: 'AI service timed out. Please try again.' }, { status: 504 })
     }
-
-    // Handle fetch errors (network, DNS, etc.)
     if (err.name === 'TypeError' && err.message.includes('fetch')) {
       return NextResponse.json({ error: 'Network error connecting to AI service.' }, { status: 502 })
     }
-
     const errorMessage = err.message || 'Internal server error'
     console.error('Generation error:', errorMessage)
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
