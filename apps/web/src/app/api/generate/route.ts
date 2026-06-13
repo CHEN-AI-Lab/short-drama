@@ -62,95 +62,80 @@ export async function POST(request: Request) {
     const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
-    // ── Call AI API with fallback models ──
+    // ── Call AI API ──
     const baseUrl = process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1'
     const apiKey = process.env.OPENAI_API_KEY
-    const primaryModel = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
-    const fallbackModels = ['sensenova-6.7-flash', 'sensenova-4.0-flash', 'sensenova-4.0-turbo']
+    const model = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
 
     if (!apiKey) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
 
-    async function callModel(modelName: string): Promise<Response> {
-      return fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          max_tokens: 4096,
-          temperature: 0.7,
-        }),
-        signal: AbortSignal.timeout(9000),
-      })
-    }
+    const aiRes = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 4096,
+        temperature: 0.7,
+      }),
+      signal: AbortSignal.timeout(30000),
+    })
 
-    const modelsToTry = [primaryModel, ...fallbackModels.filter((m) => m !== primaryModel)]
-    let generationResponse: any = null
-    let lastError = ''
-
-    for (const modelName of modelsToTry) {
-      let aiRes: Response
-      try {
-        aiRes = await callModel(modelName)
-      } catch (fetchErr) {
-        lastError = `Model ${modelName}: ${fetchErr instanceof Error ? fetchErr.message : 'timeout'}`
-        continue
-      }
-
-      if (!aiRes.ok) {
-        const errText = await aiRes.text().catch(() => '')
-        lastError = `Model ${modelName}: ${aiRes.status} ${errText.slice(0, 80)}`
-        continue
-      }
-
-      // Parse the AI response
-      const aiData = await aiRes.json()
-      let content = ''
-      if (aiData.choices?.length) {
-        content = aiData.choices[0].message?.content || ''
-      } else if (aiData.data?.choices?.length) {
-        content = aiData.data.choices[0].message?.content || ''
-      }
-
-      if (!content) continue
-
-      let jsonStr = content.trim()
-      const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
-      if (jsonMatch) jsonStr = jsonMatch[1].trim()
-
-      try {
-        generationResponse = JSON.parse(jsonStr)
-        break // Success!
-      } catch {
-        const firstBrace = jsonStr.indexOf('{')
-        const lastBrace = jsonStr.lastIndexOf('}')
-        if (firstBrace !== -1 && lastBrace > firstBrace) {
-          try {
-            generationResponse = JSON.parse(jsonStr.slice(firstBrace, lastBrace + 1))
-            break // Success!
-          } catch {
-            lastError = `Model ${modelName}: failed to parse JSON`
-            continue
-          }
-        }
-        lastError = `Model ${modelName}: no JSON in response`
-        continue
-      }
-    }
-
-    if (!generationResponse) {
+    if (!aiRes.ok) {
+      const errText = await aiRes.text().catch(() => 'Unknown error')
       return NextResponse.json(
-        { error: `AI 服务暂时不可用，请稍后再试。${lastError ? lastError.slice(0, 80) : ''}` },
+        { error: `AI API error: ${aiRes.status} ${errText.slice(0, 200)}` },
         { status: 502 }
       )
+    }
+
+    const aiData = await aiRes.json()
+
+    // ── Parse AI response ──
+    let content = ''
+    if (aiData.choices?.length) {
+      content = aiData.choices[0].message?.content || ''
+    } else if (aiData.data?.choices?.length) {
+      content = aiData.data.choices[0].message?.content || ''
+    }
+
+    if (!content) {
+      return NextResponse.json({ error: 'Empty response from AI' }, { status: 502 })
+    }
+
+    let jsonStr = content.trim()
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
+    if (jsonMatch) jsonStr = jsonMatch[1].trim()
+
+    let generationResponse: any
+    try {
+      generationResponse = JSON.parse(jsonStr)
+    } catch {
+      const firstBrace = jsonStr.indexOf('{')
+      const lastBrace = jsonStr.lastIndexOf('}')
+      if (firstBrace !== -1 && lastBrace > firstBrace) {
+        try {
+          generationResponse = JSON.parse(jsonStr.slice(firstBrace, lastBrace + 1))
+        } catch {
+          return NextResponse.json(
+            { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
+            { status: 502 }
+          )
+        }
+      } else {
+        return NextResponse.json(
+          { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
+          { status: 502 }
+        )
+      }
     }
 
     // ── Increment daily counter ──
