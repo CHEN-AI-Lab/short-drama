@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
-    // ── Call AI API ──
+    // ── Call AI API with safety timeout (Vercel Hobby max 10s) ──
     const baseUrl = process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1'
     const apiKey = process.env.OPENAI_API_KEY
     const model = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
@@ -70,6 +70,9 @@ export async function POST(request: Request) {
     if (!apiKey) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000) // must finish within 8s
 
     const aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
@@ -83,11 +86,12 @@ export async function POST(request: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 4096,
+        max_tokens: 2048,
         temperature: 0.7,
       }),
-      signal: AbortSignal.timeout(30000),
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId)
 
     if (!aiRes.ok) {
       const errText = await aiRes.text().catch(() => 'Unknown error')
