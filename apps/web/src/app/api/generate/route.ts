@@ -1,31 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { generationRequestSchema, buildGenerationPrompt, buildUserPrompt } from 'shared'
 import type { Character, EpisodeOutline, CharacterArc } from 'shared'
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+export const runtime = 'edge'
 export const maxDuration = 60
-
-const DAILY_FREE_LIMIT = 3
-
-async function getSupabase() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  const cookieStore = await cookies()
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() { return cookieStore.getAll() },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          try { cookieStore.set(name, value, options) } catch {}
-        })
-      },
-    },
-  })
-}
 
 export async function POST(request: Request) {
   try {
@@ -33,36 +11,11 @@ export async function POST(request: Request) {
     const parsed = generationRequestSchema.parse(body)
     const { genres, episodeCount, generationType, locale, additionalInstructions } = parsed
 
-    // ── Authenticate user ──
-    const supabase = await getSupabase()
-    let user = null
-    if (supabase) {
-      const { data } = await supabase.auth.getUser()
-      user = data?.user
-    }
-
-    // ── Check daily limit (free users) ──
-    if (user) {
-      const meta = user.user_metadata || {}
-      const today = new Date().toISOString().slice(0, 10)
-      const genDate = meta.daily_gen_date
-      const genCount = (meta.daily_gen_count as number) || 0
-      const dailyCount = genDate === today ? genCount : 0
-      const isPaid =
-        meta.paid === true || user.app_metadata?.paid === true || user.app_metadata?.role === 'pro'
-      if (!isPaid && dailyCount >= DAILY_FREE_LIMIT) {
-        return NextResponse.json(
-          { error: `Daily limit reached. Free users get ${DAILY_FREE_LIMIT} generations/day. Upgrade to continue.` },
-          { status: 429 }
-        )
-      }
-    }
-
     // ── Build prompts ──
     const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
-    // ── Call AI API with safety timeout (Vercel Hobby max 10s) ──
+    // ── Call AI API ──
     const baseUrl = process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1'
     const apiKey = process.env.OPENAI_API_KEY
     const model = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
@@ -72,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 8000) // must finish within 8s
+    const timeoutId = setTimeout(() => controller.abort(), 25000)
 
     const aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
@@ -86,7 +39,7 @@ export async function POST(request: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 2048,
+        max_tokens: 4096,
         temperature: 0.7,
       }),
       signal: controller.signal,
@@ -139,26 +92,6 @@ export async function POST(request: Request) {
           { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
           { status: 502 }
         )
-      }
-    }
-
-    // ── Increment daily counter ──
-    if (user && supabase) {
-      const meta = user.user_metadata || {}
-      const today = new Date().toISOString().slice(0, 10)
-      const genDate = meta.daily_gen_date
-      const genCount = (meta.daily_gen_count as number) || 0
-      const dailyCount = genDate === today ? genCount : 0
-      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-      if (serviceRoleKey) {
-        const serviceClient = createServerClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          serviceRoleKey,
-          { cookies: { getAll() { return [] }, setAll() {} }, auth: { persistSession: false } }
-        )
-        await serviceClient.auth.admin.updateUserById(user.id, {
-          user_metadata: { ...meta, daily_gen_date: today, daily_gen_count: dailyCount + 1 },
-        })
       }
     }
 
