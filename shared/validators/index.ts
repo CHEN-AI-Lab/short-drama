@@ -13,7 +13,7 @@ export const localeSchema = z.enum(['zh-CN', 'en'])
 export const generationRequestSchema = z.object({
   genres: z.array(dramaGenreSchema).min(1, '至少选择一个题材').max(3, '最多选择3个题材'),
   episodeCount: episodeCountSchema.default(10),
-  generationType: generationTypeSchema.default('outline'),
+  generationType: generationTypeSchema.default('full_script'),
   locale: localeSchema.default('zh-CN'),
   additionalInstructions: z.string().max(500).optional(),
   autoEpisodeCount: z.boolean().optional().default(false),

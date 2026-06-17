@@ -43,7 +43,7 @@ export default function DramaGenerator() {
   const [selectedGenres, setSelectedGenres] = useState<DramaGenre[]>([])
   const [autoEpisodeCount, setAutoEpisodeCount] = useState(true)
   const [episodeCount, setEpisodeCount] = useState<EpisodeCount>(10)
-  const [generationType, setGenerationType] = useState<GenerationType>('outline')
+  const [generationType, setGenerationType] = useState<GenerationType>('full_script')
   const [additionalInstructions, setAdditionalInstructions] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<GenerationResponse | null>(null)
