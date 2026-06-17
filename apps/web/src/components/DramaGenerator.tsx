@@ -192,7 +192,7 @@ export default function DramaGenerator() {
           if (s.description) lines.push(`   - 📝 描述：${s.description}`)
           if (s.keyDialogue?.length) {
             lines.push(`   - 💬 对白：`)
-            s.keyDialogue.forEach((d) => lines.push(`     > ${d}`))
+            ;(Array.isArray(s.keyDialogue) ? s.keyDialogue : [s.keyDialogue]).forEach((d) => lines.push(`     > ${d}`))
           }
         })
         lines.push('')

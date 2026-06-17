@@ -135,7 +135,10 @@ export async function POST(request: Request) {
             typeof ch === 'string' ? { name: ch, emotion: '' } : { name: ch.name || '', emotion: ch.emotion || '' }
           ),
           description: s.description || '',
-          keyDialogue: s.keyDialogue || s.dialogue || [],
+          keyDialogue: Array.isArray(s.keyDialogue) ? s.keyDialogue : 
+                Array.isArray(s.dialogue) ? s.dialogue : 
+                typeof s.keyDialogue === 'string' ? [s.keyDialogue] :
+                typeof s.dialogue === 'string' ? [s.dialogue] : [],
           duration: s.duration || '',
         })),
         hook: ep.hook || '',
