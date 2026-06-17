@@ -516,12 +516,9 @@ export default function DramaGenerator() {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-center gap-3 pt-4">
+          <div className="flex justify-center pt-4">
             <Button variant="ghost" size="md" onClick={() => downloadMd(result)}>
               {locale === 'zh-CN' ? '📥 下载剧本' : '📥 Download Script'}
-            </Button>
-            <Button variant="outline" size="md" onClick={handleGenerate}>
-              {locale === 'zh-CN' ? '🔄 重新生成' : '🔄 Regenerate'}
             </Button>
           </div>
         </div>
