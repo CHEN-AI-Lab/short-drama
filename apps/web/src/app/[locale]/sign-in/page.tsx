@@ -11,6 +11,7 @@ export default function SignInPage() {
   const at = useTranslations('auth')
   const router = useRouter()
   const params = useParams()
+  const locale = (params.locale as string) || 'zh-CN'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -59,7 +60,7 @@ export default function SignInPage() {
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/${locale}/auth/callback`,
         },
       })
 
