@@ -520,11 +520,8 @@ export default function DramaGenerator() {
             <Button variant="ghost" size="md" onClick={() => downloadMd(result)}>
               {locale === 'zh-CN' ? '📥 下载剧本' : '📥 Download Script'}
             </Button>
-            <Button variant="outline" size="md" onClick={() => {
-              setResult(null)
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}>
-              {ot('generateAgain')}
+            <Button variant="outline" size="md" onClick={handleGenerate}>
+              {locale === 'zh-CN' ? '🔄 重新生成' : '🔄 Regenerate'}
             </Button>
           </div>
         </div>
