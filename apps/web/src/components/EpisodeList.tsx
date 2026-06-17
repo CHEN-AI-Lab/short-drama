@@ -43,16 +43,6 @@ export default function EpisodeList({
 
   return (
     <div className="space-y-6">
-      {/* Title + Premise */}
-      <div className="space-y-2">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-          {title}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-          {premise}
-        </p>
-      </div>
-
       {/* Episode accordion */}
       <div className="space-y-3">
         {episodes.map((ep) => {

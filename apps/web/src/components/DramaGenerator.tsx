@@ -49,7 +49,6 @@ export default function DramaGenerator() {
   const [result, setResult] = useState<GenerationResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ResultTab>('characters')
-  const [showParams, setShowParams] = useState(false)
   const resultRef = useRef<HTMLDivElement>(null)
 
   // ── Restore state from URL params (from history page) ──
@@ -441,54 +440,25 @@ export default function DramaGenerator() {
           {/* Title card with generation info */}
           <Card>
             <CardContent className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {result.title}
-                  </h2>
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {selectedGenres.map((genre) => (
-                      <Badge key={genre} color="primary">
-                        {getGenreIcon(genre)} {getGenreLabel(genre)}
-                      </Badge>
-                    ))}
-                  </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {result.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '题材' : 'Genres'}:</span>{' '}
+                    {selectedGenres.map((g) => getGenreLabel(g)).join(' · ')}
+                  </span>
+                  <span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '集数' : 'Episodes'}:</span>{' '}
+                    {result.episodes.length}
+                  </span>
+                  <span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '类型' : 'Type'}:</span>{' '}
+                    {gtt(generationType)}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowParams(!showParams)}
-                  className="shrink-0 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-1"
-                >
-                  <svg className={`w-3.5 h-3.5 transition-transform ${showParams ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                  {locale === 'zh-CN' ? '创作参数' : 'Creation params'}
-                </button>
               </div>
-
-              {/* Collapsible generation info (like liblib's "查看制作过程") */}
-              {showParams && generationInfo && (
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3 text-xs text-gray-500 dark:text-gray-400 space-y-1 animate-fade-in">
-                  <p>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      {locale === 'zh-CN' ? '题材' : 'Genres'}:
-                    </span>{' '}
-                    {generationInfo.genres.map((g) => getGenreLabel(g)).join(' · ')}
-                  </p>
-                  <p>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      {locale === 'zh-CN' ? '集数' : 'Episodes'}:
-                    </span>{' '}
-                    {generationInfo.episodeCount}
-                  </p>
-                  <p>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      {locale === 'zh-CN' ? '生成类型' : 'Type'}:
-                    </span>{' '}
-                    {gtt(generationInfo.generationType)}
-                  </p>
-                </div>
-              )}
 
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                 {result.premise}
