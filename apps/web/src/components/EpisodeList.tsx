@@ -143,6 +143,18 @@ export default function EpisodeList({
                                   ))}
                                 </div>
                               )}
+                              {scene.keyDialogue && scene.keyDialogue.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    💬 {locale === 'zh-CN' ? '对白' : 'Dialogue'}
+                                  </span>
+                                  {scene.keyDialogue.map((line, di) => (
+                                    <p key={di} className="mt-1 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700">
+                                      {line}
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
