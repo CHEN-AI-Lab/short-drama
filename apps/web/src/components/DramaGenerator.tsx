@@ -5,7 +5,6 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
   GENRES,
-  EPISODE_COUNTS,
   GENERATION_TYPES,
   generationRequestSchema,
 } from 'shared'
@@ -82,7 +81,7 @@ export default function DramaGenerator() {
     }
     if (epStr) {
       const count = parseInt(epStr, 10)
-      if (EPISODE_COUNTS.includes(count as EpisodeCount)) setEpisodeCount(count as EpisodeCount)
+      if (count >= 1 && count <= 200) setEpisodeCount(count as EpisodeCount)
     }
     if (genreStr || epStr) {
       window.history.replaceState({}, '', `/${locale}`)
@@ -254,16 +253,21 @@ export default function DramaGenerator() {
                 {ct('selectEpisodeCount')}
               </h2>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {EPISODE_COUNTS.map((count: EpisodeCount) => (
-                <GenrePill
-                  key={count}
-                  label={`${count} ${locale === 'zh-CN' ? '集' : 'eps'}`}
-                  active={episodeCount === count}
-                  onClick={() => setEpisodeCount(count)}
-                  size="sm"
-                />
-              ))}
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={1}
+                max={200}
+                value={episodeCount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10)
+                  if (!isNaN(val) && val >= 1 && val <= 200) setEpisodeCount(val as EpisodeCount)
+                }}
+                className="w-24 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {locale === 'zh-CN' ? '集' : 'episodes'}
+              </span>
             </div>
           </div>
         </div>
