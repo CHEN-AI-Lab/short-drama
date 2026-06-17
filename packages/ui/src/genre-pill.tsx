@@ -9,6 +9,7 @@ interface GenrePillProps {
   onClick: () => void
   size?: PillSize
   className?: string
+  title?: string
 }
 
 const sizeStyles: Record<PillSize, string> = {
@@ -23,11 +24,13 @@ const GenrePill: React.FC<GenrePillProps> = ({
   onClick,
   size = 'md',
   className = '',
+  title,
 }) => {
   return (
     <button
       type="button"
       onClick={onClick}
+      title={title}
       className={[
         'inline-flex items-center rounded-full border font-medium transition-all duration-150',
         sizeStyles[size],

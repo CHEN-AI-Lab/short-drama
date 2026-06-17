@@ -291,7 +291,12 @@ export default function DramaGenerator() {
               </h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              {GENERATION_TYPES.map((gtItem: GenerationTypeInfo) => (
+              {GENERATION_TYPES.map((gtItem: GenerationTypeInfo) => {
+                const tooltip =
+                  locale === 'zh-CN'
+                    ? ({ outline: '每集标题+悬念+概要，无场景和对白', scene: '场景拆分：地点+时长+角色', character: '刻画角色性格/背景/关系/弧光', full_script: '完整剧本，含场景/对白/弧光' } as Record<string, string>)[gtItem.key]
+                    : ({ outline: 'Titles, hooks & summaries only', scene: 'Scene breakdowns: location, duration, characters', character: 'Character profiles, backgrounds & arcs', full_script: 'Full script with scenes, dialogue & arcs' } as Record<string, string>)[gtItem.key]
+                return (
                 <GenrePill
                   key={gtItem.key}
                   icon={<span>{gtItem.icon}</span>}
@@ -299,8 +304,10 @@ export default function DramaGenerator() {
                   active={generationType === gtItem.key}
                   onClick={() => setGenerationType(gtItem.key)}
                   size="sm"
+                  title={tooltip}
                 />
-              ))}
+                )
+              })}
             </div>
           </div>
 
