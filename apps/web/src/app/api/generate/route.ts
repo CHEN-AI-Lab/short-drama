@@ -63,28 +63,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Empty response from AI' }, { status: 502 })
     }
 
+    // ── Parse AI response with better fallback ──
     let jsonStr = content.trim()
+
+    // Try to extract JSON from code fences (```json ... ```)
     const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
     if (jsonMatch) jsonStr = jsonMatch[1].trim()
+
+    // Try to find JSON object in the response (handle extra text before/after)
+    const firstBrace = jsonStr.indexOf('{')
+    const lastBrace = jsonStr.lastIndexOf('}')
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      jsonStr = jsonStr.slice(firstBrace, lastBrace + 1)
+    }
 
     let generationResponse: any
     try {
       generationResponse = JSON.parse(jsonStr)
     } catch {
-      const firstBrace = jsonStr.indexOf('{')
-      const lastBrace = jsonStr.lastIndexOf('}')
-      if (firstBrace !== -1 && lastBrace > firstBrace) {
-        try {
-          generationResponse = JSON.parse(jsonStr.slice(firstBrace, lastBrace + 1))
-        } catch {
-          return NextResponse.json(
-            { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
-            { status: 502 }
-          )
-        }
-      } else {
+      // Last resort: try to repair common issues
+      try {
+        // Remove trailing commas, unquoted keys
+        const repaired = jsonStr
+          .replace(/,\s*}/g, '}')
+          .replace(/,\s*]/g, ']')
+          .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')
+        generationResponse = JSON.parse(repaired)
+      } catch {
         return NextResponse.json(
-          { title: '', premise: content.slice(0, 200), characters: [], episodes: [], characterArcs: [], error: 'Failed to parse AI response as JSON', rawContent: content },
+          { error: 'AI 返回格式异常，请重试。' },
           { status: 502 }
         )
       }
