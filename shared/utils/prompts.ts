@@ -1,6 +1,6 @@
 /**
  * System prompt builders for AI drama generation.
- * Provides structured prompts in the requested locale.
+ * Varies JSON output structure per generation type.
  */
 
 export interface BuildGenerationPromptParams {
@@ -8,39 +8,79 @@ export interface BuildGenerationPromptParams {
   episodeCount: number
   locale: string
   autoEpisodeCount?: boolean
+  generationType: string
 }
 
-/**
- * Build a system prompt that instructs the AI to generate drama scripts.
- * The prompt is bilingual-aware: when locale is 'zh-CN', output is in Chinese;
- * when 'en', output is in English.
- */
-export function buildGenerationPrompt(
-  params: BuildGenerationPromptParams
-): string {
-  const { genres, episodeCount, locale, autoEpisodeCount } = params
+export function buildGenerationPrompt(params: BuildGenerationPromptParams): string {
+  const { genres, episodeCount, locale, autoEpisodeCount, generationType } = params
   const isChinese = locale === 'zh-CN'
-
   const genreList = genres.join(', ')
 
-  if (isChinese) {
-    const epCountInstruction = autoEpisodeCount
-      ? `2. **集数：由你根据题材和剧情需要决定集数，通常在 5-30 集之间**`
-      : `2. **集数：必须严格生成 ${episodeCount} 集，不能多不能少**`
+  const epCountStr = autoEpisodeCount
+    ? (isChinese ? '由AI根据题材和剧情需要决定' : 'decided by AI based on the story')
+    : (isChinese ? `严格生成 ${episodeCount} 集` : `${episodeCount}`)
 
-    return `你是一位专业的短剧剧本创作大师。请根据用户提供的题材生成一部完整的短剧剧本。
-
-## 输出格式要求
-你必须严格按照以下 JSON 结构输出：
-
-{
+  // ── Per-type JSON structures ──
+  const zhStructure: Record<string, string> = {
+    outline: `{
+  "title": "剧本标题",
+  "premise": "核心设定（100-200字）",
+  "characters": [
+    { "name": "角色名", "role": "主角/配角/反派" }
+  ],
+  "episodes": [
+    {
+      "episodeNumber": 1,
+      "title": "第1集标题",
+      "hook": "悬念钩子",
+      "summary": "剧情概要（100-200字）"
+    }
+  ]
+}`,
+    scene: `{
+  "title": "剧本标题",
+  "premise": "核心设定（100-200字）",
+  "characters": [
+    { "name": "角色名", "age": 28, "personality": "性格描述", "background": "背景故事", "role": "主角/配角/反派" }
+  ],
+  "episodes": [
+    {
+      "episodeNumber": 1,
+      "title": "第1集标题",
+      "hook": "悬念钩子",
+      "summary": "剧情概要（100-200字）",
+      "scenes": [
+        { "location": "场景地点", "description": "场景描述", "duration": "时长", "characters": ["角色名"] }
+      ]
+    }
+  ]
+}`,
+    character: `{
+  "title": "剧本标题",
+  "premise": "核心设定（100-200字）",
+  "characters": [
+    {
+      "name": "角色名", "age": 28,
+      "personality": "详细性格描述",
+      "background": "完整的背景故事",
+      "role": "主角/配角/反派",
+      "relationship": "与其他角色的关系",
+      "arc": "角色成长弧光"
+    }
+  ],
+  "episodes": [
+    { "episodeNumber": 1, "title": "第1集标题", "summary": "剧情概要" }
+  ],
+  "characterArcs": [
+    { "characterId": "char_1", "arc": "成长弧光描述" }
+  ]
+}`,
+    full_script: `{
   "title": "剧本标题",
   "premise": "核心设定（100-200字，包含世界观、故事背景和核心冲突）",
   "characters": [
     {
-      "id": "char_1",
-      "name": "角色名",
-      "age": 28,
+      "name": "角色名", "age": 28,
       "personality": "性格描述",
       "background": "背景故事",
       "role": "主角/配角/反派",
@@ -49,109 +89,183 @@ export function buildGenerationPrompt(
   ],
   "episodes": [
     {
-      "id": "ep_1",
       "episodeNumber": 1,
       "title": "第1集标题",
-      "hook": "本集悬念钩子",
+      "hook": "悬念钩子",
       "summary": "剧情概要（100-200字）",
       "scenes": [
         {
-          "id": "scene_1",
           "location": "场景地点",
           "description": "场景描述",
-          "duration": "时长（如：3分钟）",
-          "characters": ["出现的角色ID列表"],
-          "dialogue": "关键对话或情节说明"
+          "duration": "时长",
+          "characters": ["角色名"],
+          "dialogue": "完整对话内容"
         }
       ]
     }
   ],
   "characterArcs": [
-    {
-      "characterId": "char_1",
-      "arc": "该角色的成长弧光描述"
-    }
+    { "characterId": "char_1", "arc": "成长弧光描述" }
   ]
-}
-
-## 创作要求
-1. 题材：${genreList}
-${epCountInstruction}
-3. 每集包含 ${episodeCount <= 10 && !autoEpisodeCount ? '5-8' : '3-5'} 个场景
-4. 剧情要有悬念和反转，节奏紧凑
-5. 角色性格鲜明，有成长弧光
-6. 每集结尾要有悬念钩子，吸引观众看下一集
-7. 对话要符合角色性格和场景氛围
-8. 全部内容使用中文输出
-9. 标题要吸引人，符合短剧风格
-10. 核心设定要有新意，避免俗套
-
-请确保输出是有效的 JSON 格式，不要包含额外的说明文字。`
+}`,
   }
 
-  const epCountInstruction = autoEpisodeCount
-    ? `2. Episode count: decide based on the genres and story, typically between 5-30 episodes`
-    : `2. Episode count: ${episodeCount}`
-
-  return `You are a professional short drama scriptwriter. Based on the user's request, generate a complete short drama script.
-
-## Output Format Requirements
-You MUST output in the following JSON structure:
-
-{
+  const enStructure: Record<string, string> = {
+    outline: `{
   "title": "Script title",
-  "premise": "Core premise (100-200 words, including world setting, story background, and core conflict)",
+  "premise": "Core premise (100-200 words)",
+  "characters": [
+    { "name": "Character name", "role": "protagonist/supporting/antagonist" }
+  ],
+  "episodes": [
+    {
+      "episodeNumber": 1,
+      "title": "Episode 1 title",
+      "hook": "Cliffhanger",
+      "summary": "Plot summary (100-200 words)"
+    }
+  ]
+}`,
+    scene: `{
+  "title": "Script title",
+  "premise": "Core premise (100-200 words)",
+  "characters": [
+    { "name": "Character name", "age": 28, "personality": "Description", "background": "Background", "role": "protagonist/supporting/antagonist" }
+  ],
+  "episodes": [
+    {
+      "episodeNumber": 1,
+      "title": "Episode 1 title",
+      "hook": "Cliffhanger",
+      "summary": "Plot summary",
+      "scenes": [
+        { "location": "Location", "description": "Scene description", "duration": "Duration", "characters": ["Character names"] }
+      ]
+    }
+  ]
+}`,
+    character: `{
+  "title": "Script title",
+  "premise": "Core premise (100-200 words)",
   "characters": [
     {
-      "id": "char_1",
-      "name": "Character name",
-      "age": 28,
-      "personality": "Personality description",
+      "name": "Character name", "age": 28,
+      "personality": "Detailed personality",
+      "background": "Complete backstory",
+      "role": "protagonist/supporting/antagonist",
+      "relationship": "Relationships",
+      "arc": "Character growth arc"
+    }
+  ],
+  "episodes": [
+    { "episodeNumber": 1, "title": "Episode 1 title", "summary": "Plot summary" }
+  ],
+  "characterArcs": [
+    { "characterId": "char_1", "arc": "Growth arc description" }
+  ]
+}`,
+    full_script: `{
+  "title": "Script title",
+  "premise": "Core premise (100-200 words)",
+  "characters": [
+    {
+      "name": "Character name", "age": 28,
+      "personality": "Description",
       "background": "Background story",
       "role": "protagonist/supporting/antagonist",
-      "relationship": "Relationships with other characters"
+      "relationship": "Relationships"
     }
   ],
   "episodes": [
     {
-      "id": "ep_1",
       "episodeNumber": 1,
       "title": "Episode 1 title",
-      "hook": "Episode cliffhanger",
-      "summary": "Plot summary (100-200 words)",
+      "hook": "Cliffhanger",
+      "summary": "Plot summary",
       "scenes": [
         {
-          "id": "scene_1",
-          "location": "Scene location",
+          "location": "Location",
           "description": "Scene description",
-          "duration": "Duration (e.g., 3 minutes)",
-          "characters": ["List of character IDs appearing"],
-          "dialogue": "Key dialogue or plot explanation"
+          "duration": "Duration",
+          "characters": ["Character names"],
+          "dialogue": "Full dialogue"
         }
       ]
     }
   ],
   "characterArcs": [
-    {
-      "characterId": "char_1",
-      "arc": "Description of this character's growth arc"
-    }
+    { "characterId": "char_1", "arc": "Growth arc description" }
   ]
-}
+}`,
+  }
 
-## Creative Requirements
+  const typename: Record<string, string> = isChinese
+    ? { outline: '分集大纲', scene: '场景拆分', character: '人物弧光', full_script: '完整剧本' }
+    : { outline: 'Outline', scene: 'Scene Breakdown', character: 'Character Arc', full_script: 'Full Script' }
+
+  const typedesc: Record<string, string> = isChinese
+    ? {
+        outline: '只需要每集的标题、悬念钩子和剧情概要，不要场景和对白',
+        scene: '需要每集的场景拆分（地点、时长、角色），不需要对白',
+        character: '重点刻画角色性格、背景、关系和成长弧光，集数概要即可',
+        full_script: '完整的剧本，包含所有场景的详细对白',
+      }
+    : {
+        outline: 'Only episode titles, hooks and summaries — no scenes or dialogue',
+        scene: 'Include scene breakdowns (location, duration, characters) — no dialogue',
+        character: 'Focus on character profiles, backgrounds, relationships and arcs',
+        full_script: 'Complete script with full dialogue for all scenes',
+      }
+
+  const jsonStructure = (isChinese ? zhStructure : enStructure)[generationType] || (isChinese ? zhStructure.full_script : enStructure.full_script)
+  const tn = typename[generationType] || typename.full_script
+  const td = typedesc[generationType] || typedesc.full_script
+
+  const extra = (isChinese ? generationType === 'character' : generationType === 'character')
+    ? (isChinese ? '\n建议生成 3-6 个角色，每个角色详细刻画。' : '\nGenerate 3-6 detailed characters.')
+    : ''
+
+  if (isChinese) {
+    return `你是一位专业的短剧剧本创作大师。请根据用户需求${tn === '分集大纲' ? '生成一份分集大纲' : tn === '场景拆分' ? '进行场景拆分' : tn === '人物弧光' ? '设计人物弧光' : '创作完整剧本'}。
+
+## 当前模式：${tn}
+${td}${extra}
+
+## 输出格式要求
+严格按照以下 JSON 结构输出，不要添加多余字段：
+
+${jsonStructure}
+
+## 创作要求
+1. 题材：${genreList}
+2. 集数：${epCountStr}
+3. 剧情有悬念和反转，节奏紧凑
+4. 角色性格鲜明
+5. 每集结尾有悬念钩子
+6. 全部中文输出
+
+确保输出是有效 JSON，不要包含额外说明文字。`
+  }
+
+  return `You are a professional short drama scriptwriter. Generate content based on user request.
+
+## Current Mode: ${tn}
+${td}${extra}
+
+## Output Format Requirements
+Strictly follow this JSON structure, no extra fields:
+
+${jsonStructure}
+
+## Requirements
 1. Genres: ${genreList}
-${epCountInstruction}
-3. Each episode should contain 3-5 scenes
-4. Plot must have suspense and twists, with a tight pacing
-5. Characters must have distinct personalities and growth arcs
-6. Each episode must end with a cliffhanger to hook viewers for the next episode
-7. Dialogue must match character personality and scene atmosphere
-8. All content must be output in English
-9. Titles should be attention-grabbing, fitting the short drama style
-10. Core premise should be creative and avoid clichés
+2. Episodes: ${epCountStr}
+3. Plot must have suspense and twists
+4. Characters must have distinct personalities
+5. Each episode ends with a cliffhanger
+6. Output in English
 
-Ensure the output is valid JSON format without any additional explanatory text.`
+Ensure valid JSON output only.`
 }
 
 export interface BuildUserPromptParams {
@@ -161,18 +275,13 @@ export interface BuildUserPromptParams {
   additionalInstructions?: string
 }
 
-/**
- * Build a user prompt with specific genre combinations and episode count.
- */
-export function buildUserPrompt(
-  params: BuildUserPromptParams
-): string {
+export function buildUserPrompt(params: BuildUserPromptParams): string {
   const { genres, episodeCount, generationType, additionalInstructions } = params
   const genreList = genres.join(' + ')
 
   const typeInstructions: Record<string, string> = {
-    outline: 'Generate a detailed episode-by-episode outline with hooks and summaries only (no full dialogue).',
-    scene: 'For each episode, provide a complete scene breakdown including locations, durations, and character appearances.',
+    outline: 'Generate a detailed episode-by-episode outline with hooks and summaries only (no full dialogue, no scene details).',
+    scene: 'For each episode, provide a complete scene breakdown including locations, durations, and character appearances (no dialogue).',
     character: 'Focus on character development arcs. Include detailed personality profiles, backstories, and how each character changes across the episodes.',
     full_script: 'Generate the complete script with full dialogue for all scenes across all episodes.',
   }
@@ -180,7 +289,6 @@ export function buildUserPrompt(
   const baseInstruction = typeInstructions[generationType] || typeInstructions.outline
 
   let prompt = `Generate a ${genreList} short drama with ${episodeCount} episodes.`
-
   prompt += `\n\nGeneration type: ${generationType}`
   prompt += `\n${baseInstruction}`
 

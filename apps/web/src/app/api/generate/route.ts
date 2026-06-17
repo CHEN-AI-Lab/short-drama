@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const { genres, episodeCount, generationType, locale, additionalInstructions, autoEpisodeCount } = parsed
 
     // ── Build prompts ──
-    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount })
+    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
     // ── Call AI API ──
