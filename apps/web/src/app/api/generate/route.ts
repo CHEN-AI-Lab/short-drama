@@ -9,10 +9,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const parsed = generationRequestSchema.parse(body)
-    const { genres, episodeCount, generationType, locale, additionalInstructions } = parsed
+    const { genres, episodeCount, generationType, locale, additionalInstructions, autoEpisodeCount } = parsed
 
     // ── Build prompts ──
-    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale })
+    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
     // ── Call AI API ──
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
     // ── Return result ──
     const characters: Character[] = normalizeCharacters(generationResponse.characters)
     const episodes: EpisodeOutline[] = normalizeEpisodes(generationResponse.episodes)
-    const targetCount = episodeCount
+    const targetCount = autoEpisodeCount ? episodes.length : episodeCount
     const trimmedEpisodes = episodes.slice(0, targetCount)
     const renumberedEpisodes = trimmedEpisodes.map((ep, i) => ({ ...ep, episode: i + 1 }))
     const characterArcs: CharacterArc[] = normalizeArcs(generationResponse.characterArcs || generationResponse.character_arcs, characters)

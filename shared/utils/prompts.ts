@@ -7,6 +7,7 @@ export interface BuildGenerationPromptParams {
   genres: string[]
   episodeCount: number
   locale: string
+  autoEpisodeCount?: boolean
 }
 
 /**
@@ -17,12 +18,16 @@ export interface BuildGenerationPromptParams {
 export function buildGenerationPrompt(
   params: BuildGenerationPromptParams
 ): string {
-  const { genres, episodeCount, locale } = params
+  const { genres, episodeCount, locale, autoEpisodeCount } = params
   const isChinese = locale === 'zh-CN'
 
   const genreList = genres.join(', ')
 
   if (isChinese) {
+    const epCountInstruction = autoEpisodeCount
+      ? `2. **集数：由你根据题材和剧情需要决定集数，通常在 5-30 集之间**`
+      : `2. **集数：必须严格生成 ${episodeCount} 集，不能多不能少**`
+
     return `你是一位专业的短剧剧本创作大师。请根据用户提供的题材生成一部完整的短剧剧本。
 
 ## 输出格式要求
@@ -71,8 +76,8 @@ export function buildGenerationPrompt(
 
 ## 创作要求
 1. 题材：${genreList}
-2. **集数：必须严格生成 ${episodeCount} 集，不能多不能少**
-3. 每集包含 ${episodeCount <= 10 ? '5-8' : '3-5'} 个场景
+${epCountInstruction}
+3. 每集包含 ${episodeCount <= 10 && !autoEpisodeCount ? '5-8' : '3-5'} 个场景
 4. 剧情要有悬念和反转，节奏紧凑
 5. 角色性格鲜明，有成长弧光
 6. 每集结尾要有悬念钩子，吸引观众看下一集
@@ -83,6 +88,10 @@ export function buildGenerationPrompt(
 
 请确保输出是有效的 JSON 格式，不要包含额外的说明文字。`
   }
+
+  const epCountInstruction = autoEpisodeCount
+    ? `2. Episode count: decide based on the genres and story, typically between 5-30 episodes`
+    : `2. Episode count: ${episodeCount}`
 
   return `You are a professional short drama scriptwriter. Based on the user's request, generate a complete short drama script.
 
@@ -132,8 +141,8 @@ You MUST output in the following JSON structure:
 
 ## Creative Requirements
 1. Genres: ${genreList}
-2. Episode count: ${episodeCount}
-3. Each episode should contain ${episodeCount <= 10 ? '5-8' : '3-5'} scenes
+${epCountInstruction}
+3. Each episode should contain 3-5 scenes
 4. Plot must have suspense and twists, with a tight pacing
 5. Characters must have distinct personalities and growth arcs
 6. Each episode must end with a cliffhanger to hook viewers for the next episode

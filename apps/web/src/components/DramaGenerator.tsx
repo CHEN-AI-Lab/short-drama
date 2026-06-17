@@ -41,6 +41,7 @@ export default function DramaGenerator() {
 
   // ── State ──
   const [selectedGenres, setSelectedGenres] = useState<DramaGenre[]>([])
+  const [autoEpisodeCount, setAutoEpisodeCount] = useState(true)
   const [episodeCount, setEpisodeCount] = useState<EpisodeCount>(10)
   const [generationType, setGenerationType] = useState<GenerationType>('outline')
   const [additionalInstructions, setAdditionalInstructions] = useState('')
@@ -106,10 +107,11 @@ export default function DramaGenerator() {
 
     const parseResult = generationRequestSchema.safeParse({
       genres: selectedGenres,
-      episodeCount,
+      episodeCount: autoEpisodeCount ? 0 : episodeCount,
       generationType,
       locale,
       additionalInstructions: additionalInstructions || undefined,
+      autoEpisodeCount,
     })
 
     if (!parseResult.success) {
@@ -311,20 +313,43 @@ export default function DramaGenerator() {
               </h2>
             </div>
             <div className="flex items-center gap-3">
-              <input
-                type="number"
-                min={1}
-                max={200}
-                value={episodeCount}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10)
-                  if (!isNaN(val) && val >= 1 && val <= 200) setEpisodeCount(val as EpisodeCount)
-                }}
-                className="w-24 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {locale === 'zh-CN' ? '集' : 'episodes'}
+              {/* Auto toggle */}
+              <button
+                type="button"
+                onClick={() => setAutoEpisodeCount(!autoEpisodeCount)}
+                className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 focus:outline-none ${
+                  autoEpisodeCount
+                    ? 'border-indigo-500 bg-indigo-500'
+                    : 'border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700'
+                }`}
+                role="switch"
+                aria-checked={autoEpisodeCount}
+              >
+                <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ${
+                  autoEpisodeCount ? 'translate-x-5' : 'translate-x-0'
+                }`} />
+              </button>
+              <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 min-w-[40px]">
+                {locale === 'zh-CN' ? '自动' : 'Auto'}
               </span>
+              {!autoEpisodeCount && (
+                <div className="flex items-center gap-2 ml-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={episodeCount}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10)
+                      if (!isNaN(val) && val >= 1 && val <= 200) setEpisodeCount(val as EpisodeCount)
+                    }}
+                    className="w-20 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {locale === 'zh-CN' ? '集' : 'eps'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
