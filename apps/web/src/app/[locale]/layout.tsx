@@ -49,17 +49,20 @@ export default async function LocaleLayout({ children, params }: Props) {
               <nav className="hidden sm:flex items-center gap-1">
                 <span className="relative">
                   <NavLink href={`/${locale}`}>
-                    {t('navGenerate')}
+                    <span className="hidden md:inline">{t('navGenerate')}</span>
+                    <span className="md:hidden">生成</span>
                   </NavLink>
                 </span>
                 <span className="relative">
                   <NavLink href={`/${locale}/history`}>
-                    {t('navHistory')}
+                    <span className="hidden md:inline">{t('navHistory')}</span>
+                    <span className="md:hidden">历史</span>
                   </NavLink>
                 </span>
                 <span className="relative">
                   <NavLink href={`/${locale}/pricing`}>
-                    {t('pricing')}
+                    <span className="hidden md:inline">{t('pricing')}</span>
+                    <span className="md:hidden">定价</span>
                   </NavLink>
                 </span>
               </nav>
