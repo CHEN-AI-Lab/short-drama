@@ -41,6 +41,14 @@ scripts/check.sh      # Full quality gate
 - [ ] No hardcoded secrets
 - [ ] pnpm build passes
 - [ ] Core tests pass
+- [ ] Docs updated (architecture.md / decisions.md / progress.md)
+
+## Documentation Rule
+**每次修改功能或新增功能，必须同步更新相关文档：**
+- 架构/功能变化 → 更新 `docs/architecture.md`
+- 技术决策 → 更新 `docs/decisions.md`（新增 ADR）
+- 进度 → 更新 `docs/progress.md`
+- 这条规则对所有 Agent 生效，不可跳过。
 
 ## Multi-End Architecture
 - shared/ → all cross-platform code
