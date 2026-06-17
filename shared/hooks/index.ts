@@ -83,7 +83,15 @@ export function useDramaHistory() {
     saveHistory([])
   }, [])
 
-  return { items, addItem, clearAll }
+  const removeItem = useCallback((id: string) => {
+    setItems((prev) => {
+      const updated = prev.filter((item) => item.id !== id)
+      saveHistory(updated)
+      return updated
+    })
+  }, [])
+
+  return { items, addItem, removeItem, clearAll }
 }
 
 /**
