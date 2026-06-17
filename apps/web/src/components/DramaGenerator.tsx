@@ -149,38 +149,84 @@ export default function DramaGenerator() {
     GENRES.find((g: GenreInfo) => g.key === genre)?.icon || ''
 
   // ── Export helpers ──
-  const formatScriptAsText = (r: GenerationResponse): string => {
+  const formatScriptAsMarkdown = (r: GenerationResponse): string => {
     const lines: string[] = []
-    lines.push(`《${r.title}》`)
-    lines.push('='.repeat(30))
+    lines.push(`# 《${r.title}》`)
     lines.push('')
-    lines.push(r.premise)
+    lines.push('> ' + r.premise)
     lines.push('')
-    lines.push('── 角色 ──')
-    r.characters.forEach((c) => {
-      lines.push(`  ${c.name}（${c.role}）: ${c.personality.join(', ')}`)
+    lines.push('---')
+    lines.push('')
+    lines.push('## 👥 角色介绍')
+    lines.push('')
+    r.characters.forEach((c, i) => {
+      lines.push(`### ${i + 1}. ${c.name}`)
+      lines.push(`- **角色定位**：${c.role === 'protagonist' ? '主角' : c.role === 'antagonist' ? '反派' : c.role === 'supporting' ? '配角' : '其他'}`)
+      if (c.age) lines.push(`- **年龄**：${c.age}`)
+      if (c.personality.length) lines.push(`- **性格**：${c.personality.join('、')}`)
+      if (c.background) lines.push(`- **背景**：${c.background}`)
+      if (c.relationships?.length) {
+        lines.push(`- **关系**：${c.relationships.map((rel) => `${rel.name}（${rel.relation}）`).join('、')}`)
+      }
+      if (c.arc) lines.push(`- **弧光**：${c.arc}`)
+      lines.push('')
     })
+
+    lines.push('---')
     lines.push('')
-    lines.push('── 分集 ──')
+    lines.push('## 📺 分集剧情')
+    lines.push('')
     r.episodes.forEach((ep) => {
-      lines.push(`  第${ep.episode}集: ${ep.title}`)
-      lines.push(`    ${ep.synopsis}`)
+      lines.push(`### 第 ${ep.episode} 集：${ep.title}`)
+      lines.push('')
+      if (ep.hook) lines.push(`> **悬念钩子**：${ep.hook}`)
+      lines.push('')
+      lines.push(ep.synopsis)
+      lines.push('')
+      if (ep.scenes?.length) {
+        lines.push('**场景列表：**')
+        ep.scenes.forEach((s, si) => {
+          lines.push(`1. **${s.title || `场景 ${si + 1}`}**`)
+          if (s.location) lines.push(`   - 📍 地点：${s.location}`)
+          if (s.duration) lines.push(`   - ⏱ 时长：${s.duration}`)
+          if (s.description) lines.push(`   - 📝 描述：${s.description}`)
+          if (s.keyDialogue?.length) {
+            lines.push(`   - 💬 对白：`)
+            s.keyDialogue.forEach((d) => lines.push(`     > ${d}`))
+          }
+        })
+        lines.push('')
+      }
     })
+
+    lines.push('---')
     lines.push('')
-    lines.push('── 人物弧光 ──')
+    lines.push('## 📈 人物弧光')
+    lines.push('')
     r.characterArcs.forEach((arc) => {
-      lines.push(`  ${arc.character.name}: → ${arc.finalState}`)
+      lines.push(`### ${arc.character.name}`)
+      lines.push(`- **最终状态**：${arc.finalState}`)
+      if (arc.episodes?.length) {
+        lines.push('- **成长轨迹**：')
+        arc.episodes.forEach((ep) => {
+          if (ep.change) lines.push(`  - 第 ${ep.episode} 集：${ep.change}`)
+        })
+      }
+      lines.push('')
     })
+
+    lines.push('---')
+    lines.push(`*由 短剧工坊 AI 自动生成*`)
     return lines.join('\n')
   }
 
-  const downloadTxt = (r: GenerationResponse) => {
-    const text = formatScriptAsText(r)
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const downloadMd = (r: GenerationResponse) => {
+    const text = formatScriptAsMarkdown(r)
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${r.title || 'script'}.txt`
+    a.download = `${r.title || 'script'}.md`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -458,8 +504,8 @@ export default function DramaGenerator() {
 
           {/* Actions */}
           <div className="flex justify-center gap-3 pt-4">
-            <Button variant="ghost" size="md" onClick={() => downloadTxt(result)}>
-              {locale === 'zh-CN' ? '📥 下载 TXT' : '📥 Download TXT'}
+            <Button variant="ghost" size="md" onClick={() => downloadMd(result)}>
+              {locale === 'zh-CN' ? '📥 下载剧本' : '📥 Download Script'}
             </Button>
             <Button variant="outline" size="md" onClick={() => {
               setResult(null)
