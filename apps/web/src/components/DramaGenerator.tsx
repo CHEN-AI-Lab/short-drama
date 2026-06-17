@@ -126,6 +126,10 @@ export default function DramaGenerator() {
       } else {
         setResult(res)
         setActiveTab('characters')
+        // Sync episode count to actual generated count
+        if (res.episodes.length > 0) {
+          setEpisodeCount(res.episodes.length as EpisodeCount)
+        }
         addItem({
           genres: selectedGenres,
           title: res.title,
@@ -327,7 +331,7 @@ export default function DramaGenerator() {
 
         {/* Instructions — collapsed by default */}
         <details className="group mb-4">
-          <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none">
+          <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none list-none [&::-webkit-details-marker]:hidden">
             <span className="flex items-center gap-1">
               <svg className="w-3.5 h-3.5 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
