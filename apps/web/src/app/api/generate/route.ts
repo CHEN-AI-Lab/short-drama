@@ -129,7 +129,9 @@ export async function POST(request: Request) {
         }
 
         if (generationResponse) break
-        lastError = `${provider.label}: JSON parse failed`
+        // Debug: include raw content preview in error
+        const preview = content.slice(0, 200).replace(/\n/g, '\\n')
+        lastError = `${provider.label}: JSON parse failed — "${preview}"`
         // Include raw content preview for debugging
         console.warn(`Raw AI response (first 300 chars): ${content.slice(0, 300)}`)
         continue
