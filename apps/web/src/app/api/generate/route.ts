@@ -129,9 +129,19 @@ export async function POST(request: Request) {
         }
 
         if (generationResponse) break
-        // Debug: include raw content preview in error
-        const preview = content.slice(0, 200).replace(/\n/g, '\\n')
-        lastError = `${provider.label}: JSON parse failed — "${preview}"`
+        // Debug: show parsing failure details
+        const fbPos = jsonStr.indexOf('{')
+        const lbPos = jsonStr.lastIndexOf('}')
+        let debugInfo = `fb=${fbPos} lb=${lbPos} len=${jsonStr.length}`
+        if (fbPos !== -1 && lbPos > fbPos) {
+          const ex = jsonStr.slice(fbPos, lbPos + 1)
+          let parseErr = '?'
+          try { JSON.parse(ex) } catch (e) { parseErr = String(e).slice(0, 100) }
+          debugInfo += ` extract=${ex.slice(0, 200).replace(/\n/g, '\\n')} err=${parseErr}`
+        } else {
+          debugInfo += ` raw=${jsonStr.slice(0, 200).replace(/\n/g, '\\n')}`
+        }
+        lastError = `${provider.label}: JSON parse failed [${debugInfo}]`
         // Include raw content preview for debugging
         console.warn(`Raw AI response (first 300 chars): ${content.slice(0, 300)}`)
         continue
