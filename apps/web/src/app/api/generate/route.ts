@@ -129,15 +129,24 @@ export async function POST(request: Request) {
         }
 
         if (generationResponse) break
-        // Debug: show parsing failure details
+        // Debug: show JSON parse error with position context
         const fbPos = jsonStr.indexOf('{')
         const lbPos = jsonStr.lastIndexOf('}')
         let debugInfo = `fb=${fbPos} lb=${lbPos} len=${jsonStr.length}`
         if (fbPos !== -1 && lbPos > fbPos) {
           const ex = jsonStr.slice(fbPos, lbPos + 1)
-          let parseErr = '?'
-          try { JSON.parse(ex) } catch (e) { parseErr = String(e).slice(0, 100) }
-          debugInfo += ` extract=${ex.slice(0, 200).replace(/\n/g, '\\n')} err=${parseErr}`
+          try { JSON.parse(ex); debugInfo += ' ok' }
+          catch (e) {
+            const msg = String((e as Error).message || e).slice(0, 80)
+            // Find position of the error in the extracted JSON
+            const posMatch = msg.match(/position\s+(\d+)/i)
+            const errPos = posMatch ? parseInt(posMatch[1]) : -1
+            const ctxStart = Math.max(0, errPos - 40)
+            const ctxEnd = Math.min(ex.length, errPos + 40)
+            const ctx = errPos >= 0 ? ex.slice(ctxStart, ctxEnd).replace(/\n/g, '\\n') : '?'
+            debugInfo += ` errPos=${errPos} ctx="${ctx}" msg=${msg}`
+          }
+          debugInfo += ` preview=${ex.slice(0, 100).replace(/\n/g, '\\n')}`
         } else {
           debugInfo += ` raw=${jsonStr.slice(0, 200).replace(/\n/g, '\\n')}`
         }
