@@ -120,7 +120,16 @@ export async function POST(request: Request) {
             break
           } catch {
             // Try to repair
-            const repaired = candidate.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')
+            let repaired = candidate
+              .replace(/,\s*}/g, '}')
+              .replace(/,\s*]/g, ']')
+              // Quote unquoted string values (value starts with Chinese/non-numeric after :)
+              .replace(/:\s*([^\s"0-9tfn{\[][^,\}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
+            // Remove any remaining bare words (repair edge cases)
+            repaired = repaired.replace(/([{,]\s*)("?\w+"?\s*:\s*)("?\w+"?)(\s*[,}])/g, (m, a, b, c, d) => {
+              if (c.startsWith('"') && c.endsWith('"')) return m
+              return a + b + '"' + c + '"' + d
+            })
             try {
               generationResponse = JSON.parse(repaired)
               break
