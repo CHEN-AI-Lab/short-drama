@@ -17,6 +17,7 @@ export const generationRequestSchema = z.object({
   locale: localeSchema.default('zh-CN'),
   additionalInstructions: z.string().max(500).optional(),
   autoEpisodeCount: z.boolean().optional().default(false),
+  startEpisode: z.number().int().min(1).optional(),
 })
 
 export type GenerationRequestInput = z.infer<typeof generationRequestSchema>

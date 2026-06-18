@@ -9,10 +9,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const parsed = generationRequestSchema.parse(body)
-    const { genres, episodeCount, generationType, locale, additionalInstructions, autoEpisodeCount } = parsed
+    const { genres, episodeCount, generationType, locale, additionalInstructions, autoEpisodeCount, startEpisode } = parsed
 
     // ── Build prompts ──
-    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType })
+    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary: '剧情已展开' })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
     // ── Call AI API with provider fallback ──

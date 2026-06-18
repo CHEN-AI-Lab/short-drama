@@ -75,7 +75,9 @@ export default function DramaGenerator() {
   const [result, setResult] = useState<GenerationResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ResultTab>('characters')
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null)
   const resultRef = useRef<HTMLDivElement>(null)
+  const BATCH_SIZE = 3 // episodes per batch (fits Vercel Hobby 10s limit)
 
   // ── Restore state from URL params (from history page) ──
   useEffect(() => {
@@ -129,6 +131,7 @@ export default function DramaGenerator() {
   const handleGenerate = useCallback(async () => {
     setError(null)
     setResult(null)
+    setBatchProgress(null)
 
     const parseResult = generationRequestSchema.safeParse({
       genres: selectedGenres,
@@ -146,34 +149,82 @@ export default function DramaGenerator() {
 
     setLoading(true)
 
+    const targetCount = autoEpisodeCount ? 0 : episodeCount
+    const batchCount = autoEpisodeCount ? 1 : Math.ceil(targetCount / BATCH_SIZE)
+
+    let merged: GenerationResponse = { title: '', premise: '', characters: [], episodes: [], characterArcs: [] }
+    const seenCharNames = new Set<string>()
+    const seenArcChars = new Set<string>()
+
     try {
-      const res = await generateDrama(parseResult.data)
-      if (res.error) {
-        setError(translateError(res.error))
-      } else {
-        setResult(res)
-        setActiveTab('characters')
-        // Auto mode: sync input to actual generated count
-        if (autoEpisodeCount && res.episodes.length > 0) {
-          setEpisodeCount(res.episodes.length as EpisodeCount)
+      for (let batch = 0; batch < batchCount; batch++) {
+        setBatchProgress({ current: batch + 1, total: batchCount })
+
+        const startEp = !autoEpisodeCount ? batch * BATCH_SIZE + 1 : undefined
+        const epInBatch = !autoEpisodeCount ? Math.min(BATCH_SIZE, targetCount - batch * BATCH_SIZE) : 0
+
+        const req = {
+          ...parseResult.data,
+          startEpisode: startEp,
+          episodeCount: !autoEpisodeCount ? epInBatch : 0,
         }
-        addItem({
-          genres: selectedGenres,
-          title: res.title,
-          premise: res.premise,
-          episodeCount,
-          locale,
-          result: res,
-        })
-        // Scroll to result after a short delay
-        setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+
+        const res = await generateDrama(req as any)
+
+        if (res.error) {
+          setError(translateError(res.error))
+          setLoading(false)
+          setBatchProgress(null)
+          return
+        }
+
+        // Merge: keep first non-empty title/premise
+        if (!merged.title) merged.title = res.title
+        if (!merged.premise) merged.premise = res.premise
+
+        // Merge characters (deduplicate by name)
+        for (const ch of res.characters || []) {
+          if (!seenCharNames.has(ch.name)) {
+            seenCharNames.add(ch.name)
+            merged.characters.push(ch)
+          }
+        }
+
+        // Merge episodes (append with correct numbering)
+        for (const ep of res.episodes || []) {
+          merged.episodes.push(ep)
+        }
+
+        // Merge arcs (deduplicate by character name)
+        for (const arc of res.characterArcs || []) {
+          if (arc.character?.name && !seenArcChars.has(arc.character.name)) {
+            seenArcChars.add(arc.character.name)
+            merged.characterArcs.push(arc)
+          }
+        }
       }
+
+      setResult(merged)
+      setActiveTab('characters')
+      if (autoEpisodeCount && merged.episodes.length > 0) {
+        setEpisodeCount(merged.episodes.length as EpisodeCount)
+      }
+      addItem({
+        genres: selectedGenres,
+        title: merged.title,
+        premise: merged.premise,
+        episodeCount: merged.episodes.length,
+        locale,
+        result: merged,
+      })
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } catch (err) {
       setError(translateError(err instanceof Error ? err.message : et('apiError')))
     } finally {
       setLoading(false)
+      setBatchProgress(null)
     }
-  }, [selectedGenres, episodeCount, generationType, locale, additionalInstructions, et])
+  }, [selectedGenres, episodeCount, generationType, locale, additionalInstructions, et, autoEpisodeCount])
 
   const getGenreLabel = (genre: DramaGenre): string => gt(genre)
   const getGenreIcon = (genre: DramaGenre): string =>
@@ -427,7 +478,11 @@ export default function DramaGenerator() {
                   <span className="inline-block animate-pulse ml-0.5" style={{ animationDelay: '0.3s' }}>.</span>
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  {locale === 'zh-CN' ? 'AI 正在创作中，请稍候...' : 'AI is creating, please wait...'}
+                  {batchProgress
+                    ? (locale === 'zh-CN'
+                      ? `第 ${batchProgress.current}/${batchProgress.total} 批`
+                      : `Batch ${batchProgress.current}/${batchProgress.total}`)
+                    : (locale === 'zh-CN' ? 'AI 正在创作中，请稍候...' : 'AI is creating, please wait...')}
                 </p>
               </div>
             </div>

@@ -51,6 +51,7 @@ export interface GenerationRequest {
   existingCharacters?: Character[]
   existingOutlines?: EpisodeOutline[]
   autoEpisodeCount?: boolean
+  startEpisode?: number
 }
 
 export interface GenerationResponse {

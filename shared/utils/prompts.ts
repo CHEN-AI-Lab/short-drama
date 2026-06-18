@@ -9,10 +9,12 @@ export interface BuildGenerationPromptParams {
   locale: string
   autoEpisodeCount?: boolean
   generationType: string
+  startEpisode?: number
+  existingSummary?: string
 }
 
 export function buildGenerationPrompt(params: BuildGenerationPromptParams): string {
-  const { genres, episodeCount, locale, autoEpisodeCount, generationType } = params
+  const { genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary } = params
   const isChinese = locale === 'zh-CN'
   const genreList = genres.join(', ')
 
@@ -226,7 +228,11 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
     : ''
 
   if (isChinese) {
-    return `你是一位专业的短剧剧本创作大师。请根据用户需求${tn === '分集大纲' ? '生成一份分集大纲' : tn === '场景拆分' ? '进行场景拆分' : tn === '人物弧光' ? '设计人物弧光' : '创作完整剧本'}。
+    const batchHeader = startEpisode
+      ? `\n## 分批生成说明\n这是第 ${startEpisode} 集起后续部分的生成请求。之前已生成：${existingSummary || '剧情已展开'}。请继续推进剧情，保持人物连贯性。`
+      : ''
+
+    return `你是一位专业的短剧剧本创作大师。请根据用户需求${tn === '分集大纲' ? '生成一份分集大纲' : tn === '场景拆分' ? '进行场景拆分' : tn === '人物弧光' ? '设计人物弧光' : '创作完整剧本'}。${batchHeader}
 
 ## 当前模式：${tn}
 ${td}${extra}
@@ -247,7 +253,11 @@ ${jsonStructure}
 确保输出是有效 JSON，不要包含额外说明文字。`
   }
 
-  return `You are a professional short drama scriptwriter. Generate content based on user request.
+  const batchHeaderEn = startEpisode
+    ? `\n\n## Batch Generation\nThis is a continuation request starting from episode ${startEpisode}. Previously generated: ${existingSummary || 'the story has started'}. Continue the plot naturally, keeping characters consistent.`
+    : ''
+
+  return `You are a professional short drama scriptwriter. Generate content based on user request.${batchHeaderEn}
 
 ## Current Mode: ${tn}
 ${td}${extra}
