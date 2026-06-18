@@ -48,9 +48,6 @@ export async function POST(request: Request) {
     let generationResponse: any = null
     let lastError = ''
 
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 9500)
-
     for (const provider of providers) {
       try {
         const aiRes = await fetch(`${provider.baseUrl}/chat/completions`, {
@@ -68,9 +65,7 @@ export async function POST(request: Request) {
             max_tokens: 32768,
             temperature: 0.7,
           }),
-          signal: controller.signal,
         })
-        clearTimeout(timeoutId)
 
         if (!aiRes.ok) {
           const errText = await aiRes.text().catch(() => 'Unknown')
@@ -269,9 +264,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request: ' + error.message }, { status: 400 })
     }
     const err = error as Error
-    if (err.name === 'AbortError') {
-      return NextResponse.json({ error: 'AI 服务响应超时，请稍后重试。' }, { status: 504 })
-    }
     if (err.name === 'TypeError' && err.message.includes('fetch')) {
       return NextResponse.json({ error: 'Network error connecting to AI service.' }, { status: 502 })
     }
