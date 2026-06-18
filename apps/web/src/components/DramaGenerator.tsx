@@ -75,7 +75,7 @@ export default function DramaGenerator() {
   const [result, setResult] = useState<GenerationResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ResultTab>('characters')
-  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null)
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number | string } | null>(null)
   const resultRef = useRef<HTMLDivElement>(null)
   const BATCH_SIZE = 3 // episodes per batch (fits Vercel Hobby 10s limit)
 
@@ -150,7 +150,7 @@ export default function DramaGenerator() {
     setLoading(true)
 
     const targetCount = autoEpisodeCount ? 0 : episodeCount
-    const batchCount = autoEpisodeCount ? 1 : Math.ceil(targetCount / BATCH_SIZE)
+    const batchCount = autoEpisodeCount ? 999 : Math.ceil(targetCount / BATCH_SIZE)
 
     let merged: GenerationResponse = { title: '', premise: '', characters: [], episodes: [], characterArcs: [] }
     const seenCharNames = new Set<string>()
@@ -158,15 +158,18 @@ export default function DramaGenerator() {
 
     try {
       for (let batch = 0; batch < batchCount; batch++) {
-        setBatchProgress({ current: batch + 1, total: batchCount })
+        setBatchProgress({ current: batch + 1, total: autoEpisodeCount ? '?' : String(batchCount) })
 
-        const startEp = !autoEpisodeCount ? batch * BATCH_SIZE + 1 : undefined
-        const epInBatch = !autoEpisodeCount ? Math.min(BATCH_SIZE, targetCount - batch * BATCH_SIZE) : 0
+        const startEp = merged.episodes.length + 1
+        const epInBatch = autoEpisodeCount ? BATCH_SIZE : Math.min(BATCH_SIZE, targetCount - batch * BATCH_SIZE)
+
+        if (epInBatch <= 0) break
 
         const req = {
           ...parseResult.data,
           startEpisode: startEp,
-          episodeCount: !autoEpisodeCount ? epInBatch : 0,
+          episodeCount: epInBatch,
+          autoEpisodeCount: false, // use fixed count per batch
         }
 
         const res = await generateDrama(req as any)
@@ -191,7 +194,7 @@ export default function DramaGenerator() {
         }
 
         // Merge episodes (append with corrected numbering)
-        const epOffset = startEp ? startEp - 1 : 0
+        const epOffset = startEp - 1
         for (const ep of res.episodes || []) {
           merged.episodes.push({ ...ep, episode: ep.episode + epOffset })
         }
@@ -203,6 +206,16 @@ export default function DramaGenerator() {
             merged.characterArcs.push(arc)
           }
         }
+
+        // Auto mode: stop when AI returns fewer episodes than requested (story is complete)
+        if (autoEpisodeCount && (res.episodes || []).length < BATCH_SIZE) break
+      }
+
+      if (merged.episodes.length === 0) {
+        setError(translateError('AI 返回为空，请重试'))
+        setLoading(false)
+        setBatchProgress(null)
+        return
       }
 
       setResult(merged)
