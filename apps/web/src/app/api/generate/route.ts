@@ -24,9 +24,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
 
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 7000)
-
     const aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -39,12 +36,10 @@ export async function POST(request: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 4096,
+        max_tokens: 32768,
         temperature: 0.7,
       }),
-      signal: controller.signal,
     })
-    clearTimeout(timeoutId)
 
     if (!aiRes.ok) {
       const errText = await aiRes.text().catch(() => 'Unknown error')
@@ -189,9 +184,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request: ' + error.message }, { status: 400 })
     }
     const err = error as Error
-    if (err.name === 'AbortError') {
-      return NextResponse.json({ error: 'AI 服务响应超时，请稍后重试。' }, { status: 504 })
-    }
     if (err.name === 'TypeError' && err.message.includes('fetch')) {
       return NextResponse.json({ error: 'Network error connecting to AI service.' }, { status: 502 })
     }
