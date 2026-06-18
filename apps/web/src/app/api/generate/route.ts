@@ -15,86 +15,108 @@ export async function POST(request: Request) {
     const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
-    // ── Call AI API ──
-    const baseUrl = process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1'
-    const apiKey = process.env.OPENAI_API_KEY
-    const model = process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite'
+    // ── Call AI API with provider fallback ──
+    // Primary: OPENAI_* env vars. Backup: BACKUP_* env vars (optional).
+    // If SenseTime fails, falls back to the backup provider automatically.
 
-    if (!apiKey) {
+    const providers: { baseUrl: string; apiKey: string; model: string; label: string }[] = []
+
+    const primaryKey = process.env.OPENAI_API_KEY
+    if (primaryKey) {
+      providers.push({
+        baseUrl: process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1',
+        apiKey: primaryKey,
+        model: process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite',
+        label: 'SenseTime',
+      })
+    }
+
+    const backupKey = process.env.BACKUP_API_KEY
+    if (backupKey) {
+      providers.push({
+        baseUrl: process.env.BACKUP_BASE_URL || 'https://api.openai.com/v1',
+        apiKey: backupKey,
+        model: process.env.BACKUP_MODEL || 'gpt-4o-mini',
+        label: 'Backup',
+      })
+    }
+
+    if (providers.length === 0) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
 
-    const aiRes = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 32768,
-        temperature: 0.7,
-      }),
-    })
+    let generationResponse: any = null
+    let lastError = ''
 
-    if (!aiRes.ok) {
-      const errText = await aiRes.text().catch(() => 'Unknown error')
+    for (const provider of providers) {
+      try {
+        const aiRes = await fetch(`${provider.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${provider.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: provider.model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            max_tokens: 32768,
+            temperature: 0.7,
+          }),
+        })
+
+        if (!aiRes.ok) {
+          const errText = await aiRes.text().catch(() => 'Unknown')
+          lastError = `${provider.label}: ${aiRes.status} ${errText.slice(0, 100)}`
+          console.warn(lastError)
+          continue
+        }
+
+        const aiData = await aiRes.json()
+        let content = ''
+        if (aiData.choices?.length) {
+          content = aiData.choices[0].message?.content || ''
+        } else if (aiData.data?.choices?.length) {
+          content = aiData.data.choices[0].message?.content || ''
+        }
+
+        if (!content) { lastError = `${provider.label}: empty response`; continue }
+
+        // ── Parse AI response ──
+        let jsonStr = content.trim()
+        const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
+        if (jsonMatch) jsonStr = jsonMatch[1].trim()
+        const firstBrace = jsonStr.indexOf('{')
+        const lastBrace = jsonStr.lastIndexOf('}')
+        if (firstBrace !== -1 && lastBrace > firstBrace) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1)
+
+        try {
+          generationResponse = JSON.parse(jsonStr)
+          break
+        } catch {
+          const repaired = jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')
+          try {
+            generationResponse = JSON.parse(repaired)
+            break
+          } catch {
+            lastError = `${provider.label}: JSON parse failed`
+            continue
+          }
+        }
+      } catch (fetchErr) {
+        lastError = `${provider.label}: ${fetchErr instanceof Error ? fetchErr.message : 'request failed'}`
+        console.warn(lastError)
+        continue
+      }
+    }
+
+    if (!generationResponse) {
       return NextResponse.json(
-        { error: `AI API error: ${aiRes.status} ${errText.slice(0, 200)}` },
+        { error: `AI 服务暂不可用${lastError ? '（' + lastError.slice(0, 80) + '）' : ''}` },
         { status: 502 }
       )
-    }
-
-    const aiData = await aiRes.json()
-
-    // ── Parse AI response ──
-    let content = ''
-    if (aiData.choices?.length) {
-      content = aiData.choices[0].message?.content || ''
-    } else if (aiData.data?.choices?.length) {
-      content = aiData.data.choices[0].message?.content || ''
-    }
-
-    if (!content) {
-      return NextResponse.json({ error: 'Empty response from AI' }, { status: 502 })
-    }
-
-    // ── Parse AI response with better fallback ──
-    let jsonStr = content.trim()
-
-    // Try to extract JSON from code fences (```json ... ```)
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
-    if (jsonMatch) jsonStr = jsonMatch[1].trim()
-
-    // Try to find JSON object in the response (handle extra text before/after)
-    const firstBrace = jsonStr.indexOf('{')
-    const lastBrace = jsonStr.lastIndexOf('}')
-    if (firstBrace !== -1 && lastBrace > firstBrace) {
-      jsonStr = jsonStr.slice(firstBrace, lastBrace + 1)
-    }
-
-    let generationResponse: any
-    try {
-      generationResponse = JSON.parse(jsonStr)
-    } catch {
-      // Last resort: try to repair common issues
-      try {
-        // Remove trailing commas, unquoted keys
-        const repaired = jsonStr
-          .replace(/,\s*}/g, '}')
-          .replace(/,\s*]/g, ']')
-          .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')
-        generationResponse = JSON.parse(repaired)
-      } catch {
-        return NextResponse.json(
-          { error: 'AI 返回格式异常，请重试。' },
-          { status: 502 }
-        )
-      }
     }
 
     // ── Transform AI response ──
