@@ -153,6 +153,10 @@ export default function DramaGenerator() {
       } else {
         setResult(res)
         setActiveTab('characters')
+        // Auto mode: sync input to actual generated count
+        if (autoEpisodeCount && res.episodes.length > 0) {
+          setEpisodeCount(res.episodes.length as EpisodeCount)
+        }
         addItem({
           genres: selectedGenres,
           title: res.title,
