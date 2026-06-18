@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
-import { generationRequestSchema, buildGenerationPrompt, buildUserPrompt } from 'shared'
-import type { Character, EpisodeOutline, CharacterArc } from 'shared'
+import { generationRequestSchema } from 'shared/validators'
+import { buildGenerationPrompt, buildUserPrompt } from 'shared/utils'
+import type { Character, EpisodeOutline, CharacterArc } from 'shared/types'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 export const maxDuration = 300
 
 export async function POST(request: Request) {

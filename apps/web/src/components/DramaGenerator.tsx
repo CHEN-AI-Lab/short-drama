@@ -39,6 +39,32 @@ export default function DramaGenerator() {
   const et = useTranslations('errors')
   const { addItem } = useDramaHistory()
 
+  // ── Error translation ──
+  const translateError = (msg: string): string => {
+    if (locale !== 'zh-CN') return msg
+    const map: Record<string, string> = {
+      'Network error. Please check your connection and try again.': '网络连接失败，请检查网络后重试',
+      'Network error connecting to AI service.': '连接 AI 服务失败，请检查网络后重试',
+      'Request timed out.': '请求超时，AI 服务响应较慢，请稍后重试',
+      'AI service error, please try again later': 'AI 服务异常，请稍后重试',
+      'AI service timed out': 'AI 服务响应超时，请稍后重试',
+      'Empty response from AI': 'AI 返回为空，请重试',
+      'Failed to parse AI response': 'AI 返回格式异常，请重试',
+      'AI service not configured': 'AI 服务未配置',
+      'Daily limit reached.': '今日免费次数已用完',
+      'AI API error: 429': 'AI 服务繁忙（限流），请稍后重试',
+      'AI API error: 502': 'AI 服务暂时不可用，请稍后重试',
+      'AI API error: 503': 'AI 服务正在维护，请稍后重试',
+      'AI API error: 504': 'AI 服务响应超时，请稍后重试',
+      'AI API error: 400': 'AI 请求参数错误，请重试',
+      'AI 服务暂时不可用': 'AI 服务暂时不可用，请稍后再试',
+    }
+    for (const [en, zh] of Object.entries(map)) {
+      if (msg.includes(en)) return zh
+    }
+    return msg
+  }
+
   // ── State ──
   const [selectedGenres, setSelectedGenres] = useState<DramaGenre[]>([])
   const [autoEpisodeCount, setAutoEpisodeCount] = useState(true)
@@ -114,7 +140,7 @@ export default function DramaGenerator() {
     })
 
     if (!parseResult.success) {
-      setError(parseResult.error.errors[0]?.message || 'Invalid input')
+      setError(translateError(parseResult.error.errors[0]?.message || 'Invalid input'))
       return
     }
 
@@ -123,7 +149,7 @@ export default function DramaGenerator() {
     try {
       const res = await generateDrama(parseResult.data)
       if (res.error) {
-        setError(res.error)
+        setError(translateError(res.error))
       } else {
         setResult(res)
         setActiveTab('characters')
@@ -139,7 +165,7 @@ export default function DramaGenerator() {
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : et('apiError'))
+      setError(translateError(err instanceof Error ? err.message : et('apiError')))
     } finally {
       setLoading(false)
     }

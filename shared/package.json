@@ -7,7 +7,10 @@
   "exports": {
     ".": "./index.ts",
     "./api": "./api/index.ts",
+    "./utils": "./utils/index.ts",
     "./utils/*": "./utils/*",
+    "./validators": "./validators/index.ts",
+    "./types": "./types/index.ts",
     "./messages/*": "./messages/*"
   },
   "peerDependencies": {
