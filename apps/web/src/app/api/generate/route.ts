@@ -123,13 +123,12 @@ export async function POST(request: Request) {
             let repaired = candidate
               .replace(/,\s*}/g, '}')
               .replace(/,\s*]/g, ']')
-              // Quote unquoted string values (value starts with Chinese/non-numeric after :)
-              .replace(/:\s*([^\s"0-9tfn{\[][^,\}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
-            // Remove any remaining bare words (repair edge cases)
-            repaired = repaired.replace(/([{,]\s*)("?\w+"?\s*:\s*)("?\w+"?)(\s*[,}])/g, (m, a, b, c, d) => {
-              if (c.startsWith('"') && c.endsWith('"')) return m
-              return a + b + '"' + c + '"' + d
-            })
+              // Quote all unquoted values after : that aren't numbers/true/false/null/objects/arrays
+              .replace(/:\s*([^"{\[0-9tfn][^,}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
+              // Also quote values that start with a digit but contain non-digit chars (like "30岁")
+              .replace(/:\s*"?(\.?\d+[^"0-9,}\]]+)"?(\s*[,}\]])/g, ': "$1"$2')
+              // Handle the case where "age": has a bare string value
+              .replace(/"age"\s*:\s*([^"{\[0-9tfn][^,}\]]*)/g, '"age": "$1"')
             try {
               generationResponse = JSON.parse(repaired)
               break
