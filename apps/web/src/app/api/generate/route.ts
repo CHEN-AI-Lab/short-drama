@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
-import { generationRequestSchema } from 'shared/validators'
-import { buildGenerationPrompt, buildUserPrompt } from 'shared/utils'
-import type { Character, EpisodeOutline, CharacterArc } from 'shared/types'
+import { generationRequestSchema, buildGenerationPrompt, buildUserPrompt } from 'shared'
+import type { Character, EpisodeOutline, CharacterArc } from 'shared'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 export const maxDuration = 300
 
 export async function POST(request: Request) {
@@ -25,6 +24,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'AI service not configured' }, { status: 500 })
     }
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 9000)
+
     const aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -37,10 +39,12 @@ export async function POST(request: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 32768,
+        max_tokens: 8192,
         temperature: 0.7,
       }),
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId)
 
     if (!aiRes.ok) {
       const errText = await aiRes.text().catch(() => 'Unknown error')
@@ -185,6 +189,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request: ' + error.message }, { status: 400 })
     }
     const err = error as Error
+    if (err.name === 'AbortError') {
+      return NextResponse.json({ error: 'AI 服务响应超时，请稍后重试。' }, { status: 504 })
+    }
     if (err.name === 'TypeError' && err.message.includes('fetch')) {
       return NextResponse.json({ error: 'Network error connecting to AI service.' }, { status: 502 })
     }
