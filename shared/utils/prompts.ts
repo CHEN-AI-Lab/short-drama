@@ -20,7 +20,9 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
 
   const epCountStr = autoEpisodeCount
     ? (isChinese ? '由AI根据题材和剧情需要决定' : 'decided by AI based on the story')
-    : (isChinese ? `严格生成 ${episodeCount} 集` : `${episodeCount}`)
+    : (isChinese
+      ? `严格生成 ${episodeCount} 集${startEpisode ? '（从第 ' + startEpisode + ' 集开始）' : ''}`
+      : `${episodeCount} episodes${startEpisode ? ' (starting from ep ' + startEpisode + ')' : ''}`)
 
   // ── Per-type JSON structures ──
   const zhStructure: Record<string, string> = {

@@ -190,9 +190,10 @@ export default function DramaGenerator() {
           }
         }
 
-        // Merge episodes (append with correct numbering)
+        // Merge episodes (append with corrected numbering)
+        const epOffset = startEp ? startEp - 1 : 0
         for (const ep of res.episodes || []) {
-          merged.episodes.push(ep)
+          merged.episodes.push({ ...ep, episode: ep.episode + epOffset })
         }
 
         // Merge arcs (deduplicate by character name)
