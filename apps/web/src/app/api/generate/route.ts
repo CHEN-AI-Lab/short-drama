@@ -88,23 +88,51 @@ export async function POST(request: Request) {
         let jsonStr = content.trim()
         const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)```/)
         if (jsonMatch) jsonStr = jsonMatch[1].trim()
-        const firstBrace = jsonStr.indexOf('{')
-        const lastBrace = jsonStr.lastIndexOf('}')
-        if (firstBrace !== -1 && lastBrace > firstBrace) jsonStr = jsonStr.slice(firstBrace, lastBrace + 1)
 
-        try {
-          generationResponse = JSON.parse(jsonStr)
-          break
-        } catch {
-          const repaired = jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')
+        // Try multiple JSON extraction strategies
+        const strategies = [
+          // Strategy 1: whole string
+          () => jsonStr,
+          // Strategy 2: between first { and last }
+          () => {
+            const fb = jsonStr.indexOf('{')
+            const lb = jsonStr.lastIndexOf('}')
+            return fb !== -1 && lb > fb ? jsonStr.slice(fb, lb + 1) : null
+          },
+          // Strategy 3: find { ... } with balanced braces
+          () => {
+            const fb = jsonStr.indexOf('{')
+            if (fb === -1) return null
+            let depth = 0
+            for (let i = fb; i < jsonStr.length; i++) {
+              if (jsonStr[i] === '{') depth++
+              if (jsonStr[i] === '}') { depth--; if (depth === 0) return jsonStr.slice(fb, i + 1) }
+            }
+            return null
+          },
+        ]
+
+        for (const strat of strategies) {
+          const candidate = strat()
+          if (!candidate) continue
           try {
-            generationResponse = JSON.parse(repaired)
+            generationResponse = JSON.parse(candidate)
             break
           } catch {
-            lastError = `${provider.label}: JSON parse failed`
-            continue
+            // Try to repair
+            const repaired = candidate.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']').replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3')
+            try {
+              generationResponse = JSON.parse(repaired)
+              break
+            } catch { continue }
           }
         }
+
+        if (generationResponse) break
+        lastError = `${provider.label}: JSON parse failed`
+        // Include raw content preview for debugging
+        console.warn(`Raw AI response (first 300 chars): ${content.slice(0, 300)}`)
+        continue
       } catch (fetchErr) {
         lastError = `${provider.label}: ${fetchErr instanceof Error ? fetchErr.message : 'request failed'}`
         console.warn(lastError)
