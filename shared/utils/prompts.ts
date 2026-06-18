@@ -20,18 +20,6 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
     ? (isChinese ? '由AI根据题材和剧情需要决定' : 'decided by AI based on the story')
     : (isChinese ? `严格生成 ${episodeCount} 集` : `${episodeCount}`)
 
-  // Verbosity guidance: more episodes = more concise per episode
-  let verbosity = ''
-  if (!autoEpisodeCount) {
-    if (episodeCount >= 30) {
-      verbosity = isChinese ? '\n集数较多，每集概要控制在 50 字以内，场景不超过 2 个，对白精简。' : '\nMany episodes: keep summaries under 50 words, max 2 scenes per episode, minimal dialogue.'
-    } else if (episodeCount >= 15) {
-      verbosity = isChinese ? '\n集数较多，每集概要控制在 80 字以内，场景不超过 3 个，对白简洁。' : '\nModerate episodes: summaries under 80 words, max 3 scenes per episode, concise dialogue.'
-    } else if (episodeCount >= 8) {
-      verbosity = isChinese ? '\n每集概要 100-150 字，场景 3-4 个。' : '\nSummaries 100-150 words, 3-4 scenes per episode.'
-    }
-  }
-
   // ── Per-type JSON structures ──
   const zhStructure: Record<string, string> = {
     outline: `{
@@ -254,7 +242,7 @@ ${jsonStructure}
 3. 剧情有悬念和反转，节奏紧凑
 4. 角色性格鲜明
 5. 每集结尾有悬念钩子
-6. 全部中文输出${verbosity}
+6. 全部中文输出
 
 确保输出是有效 JSON，不要包含额外说明文字。`
   }
@@ -275,7 +263,7 @@ ${jsonStructure}
 3. Plot must have suspense and twists
 4. Characters must have distinct personalities
 5. Each episode ends with a cliffhanger
-6. Output in English${verbosity}
+6. Output in English
 
 Ensure valid JSON output only.`
 }
