@@ -154,7 +154,7 @@ export async function POST(request: Request) {
 
     if (!generationResponse) {
       return NextResponse.json(
-        { error: `AI 服务暂不可用${lastError ? '（' + lastError.slice(0, 80) + '）' : ''}` },
+        { error: `AI 服务暂不可用${lastError ? '（' + lastError.slice(0, 300) + '）' : ''}` },
         { status: 502 }
       )
     }
