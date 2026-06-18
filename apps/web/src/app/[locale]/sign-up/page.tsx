@@ -53,7 +53,7 @@ export default function SignUpPage() {
         throw new Error(data.error || 'Sign up failed')
       }
 
-      router.push('/')
+      router.push(`/${locale}`)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed')

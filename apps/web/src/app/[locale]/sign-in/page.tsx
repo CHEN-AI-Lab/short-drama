@@ -34,7 +34,7 @@ export default function SignInPage() {
         throw new Error(data.error || 'Sign in failed')
       }
 
-      router.push('/')
+      router.push(`/${locale}`)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign in failed')

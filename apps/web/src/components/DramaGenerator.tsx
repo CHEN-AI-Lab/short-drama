@@ -212,7 +212,7 @@ export default function DramaGenerator() {
       }
 
       if (merged.episodes.length === 0) {
-        setError(translateError('AI 返回为空，请重试'))
+        setError(translateError('Empty response from AI'))
         setLoading(false)
         setBatchProgress(null)
         return

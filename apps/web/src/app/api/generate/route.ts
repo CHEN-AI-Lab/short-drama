@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     // ── Build prompts ──
     const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary: '剧情已展开' })
-    const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
+    const userPrompt = buildUserPrompt({ genres, episodeCount: autoEpisodeCount ? 30 : episodeCount, generationType, additionalInstructions })
 
     // ── Call AI API with provider fallback ──
     // Primary: OPENAI_* env vars. Backup: BACKUP_* env vars (optional).
