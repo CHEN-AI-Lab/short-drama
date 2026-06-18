@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 9000)
+    const timeoutId = setTimeout(() => controller.abort(), 7000)
 
     const aiRes = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 8192,
+        max_tokens: 4096,
         temperature: 0.7,
       }),
       signal: controller.signal,
