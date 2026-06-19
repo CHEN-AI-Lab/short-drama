@@ -22,12 +22,12 @@ const colorStyles: Record<BadgeColor, string> = {
     'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 }
 
-const Badge: React.FC<BadgeProps> = ({
+function Badge({
   color = 'default',
   icon,
   children,
   className = '',
-}) => {
+}: BadgeProps) {
   return (
     <span
       className={[

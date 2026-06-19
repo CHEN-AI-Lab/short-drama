@@ -7,10 +7,8 @@ import UserMenu from '../../components/UserMenu'
 import NavLink from '../../components/NavLink'
 import Link from 'next/link'
 
-import type { ReactNode } from 'react'
-
 type Props = {
-  children: ReactNode
+  children: React.ReactNode
   params: Promise<{ locale: string }>
 }
 

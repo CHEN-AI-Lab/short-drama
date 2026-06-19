@@ -11,12 +11,12 @@ interface CardProps {
   onClick?: () => void
 }
 
-const Card: React.FC<CardProps> = ({
+function Card({
   children,
   className = '',
   hover = false,
   onClick,
-}) => {
+}: CardProps) {
   const base = [
     'rounded-xl border border-gray-200 dark:border-gray-700',
     'bg-white dark:bg-gray-800',
@@ -65,10 +65,10 @@ interface CardHeaderProps {
   className?: string
 }
 
-const CardHeader: React.FC<CardHeaderProps> = ({
+function CardHeader({
   children,
   className = '',
-}) => {
+}: CardHeaderProps) {
   return (
     <div
       className={[
@@ -94,10 +94,10 @@ interface CardContentProps {
   className?: string
 }
 
-const CardContent: React.FC<CardContentProps> = ({
+function CardContent({
   children,
   className = '',
-}) => {
+}: CardContentProps) {
   return (
     <div className={['px-4 py-4 text-gray-700 dark:text-gray-300', className].join(' ')}>
       {children}
@@ -116,12 +116,12 @@ interface SkeletonProps {
   height?: string | number
 }
 
-const Skeleton: React.FC<SkeletonProps> = ({
+function Skeleton({
   className = '',
   variant = 'text',
   width,
   height,
-}) => {
+}: SkeletonProps) {
   const base = 'animate-pulse bg-gray-200 dark:bg-gray-700'
 
   const variantClass =
@@ -146,11 +146,11 @@ interface ErrorBannerProps {
   className?: string
 }
 
-const ErrorBanner: React.FC<ErrorBannerProps> = ({
+function ErrorBanner({
   message,
   onDismiss,
   className = '',
-}) => {
+}: ErrorBannerProps) {
   return (
     <div
       className={[

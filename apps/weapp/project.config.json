@@ -1,0 +1,31 @@
+{
+  "miniprogramRoot": "./dist",
+  "projectname": "short-drama-weapp",
+  "description": "短剧工坊 - AI Short Drama",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "preloadBackgroundData": false,
+    "minified": true,
+    "newFeature": true,
+    "coverView": true,
+    "nodeModules": true,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "uglifyFileName": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": true,
+    "compileHotReLoad": false,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true
+  },
+  "appid": "wx0000000000000000",
+  "libVersion": "3.7.0",
+  "compileType": "miniprogram",
+  "condition": {}
+}

@@ -7,3 +7,9 @@ allowBuilds:
   sharp: true
   '@parcel/watcher': true
   '@swc/core': true
+  electron: false
+  '@tarojs/binding': true
+  '@tarojs/cli': true
+  core-js: true
+  core-js-pure: true
+  es5-ext: true

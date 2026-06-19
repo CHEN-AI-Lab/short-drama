@@ -244,8 +244,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // ── Increment daily generation count for free users ──
-    if (shouldIncrementCount && authenticatedUserId) {
+    // ── Increment daily generation count for free users (first batch only) ──
+    if (shouldIncrementCount && authenticatedUserId && (!startEpisode || startEpisode <= 1)) {
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
       if (supabaseUrl && serviceRoleKey) {
         try {

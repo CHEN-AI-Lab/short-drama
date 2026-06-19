@@ -161,7 +161,7 @@ export default function HistoryPage() {
                 </div>
                 {/* Action buttons */}
                 <div className="flex flex-col gap-2 shrink-0">
-                  <Button variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); handleRegenerate(item.genres, item.episodeCount) }}>
+                  <Button variant="primary" size="sm" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleRegenerate(item.genres, item.episodeCount) }}>
                     {locale === 'zh-CN' ? '重新生成' : 'Regenerate'}
                   </Button>
                   <button

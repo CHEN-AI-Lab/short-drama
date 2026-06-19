@@ -17,7 +17,7 @@ const sizeStyles: Record<PillSize, string> = {
   md: 'px-5 py-2.5 text-sm gap-2',
 }
 
-const GenrePill: React.FC<GenrePillProps> = ({
+function GenrePill({
   icon,
   label,
   active,
@@ -25,7 +25,7 @@ const GenrePill: React.FC<GenrePillProps> = ({
   size = 'md',
   className = '',
   title,
-}) => {
+}: GenrePillProps) {
   return (
     <button
       type="button"

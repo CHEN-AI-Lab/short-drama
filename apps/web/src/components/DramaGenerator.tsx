@@ -7,6 +7,7 @@ import {
   GENRES,
   GENERATION_TYPES,
   generationRequestSchema,
+  DAILY_LIMIT_FREE,
 } from 'shared'
 import { generateDrama } from 'shared/api'
 import { useDramaHistory } from 'shared'
@@ -20,6 +21,7 @@ import type {
   HistoryItem,
 } from 'shared'
 import { GenrePill, Button, Card, CardContent, Badge } from 'ui'
+import { useUser } from './AuthProvider'
 import CharacterList from './CharacterList'
 import EpisodeList from './EpisodeList'
 import CharacterArcsView from './CharacterArcsView'
@@ -38,6 +40,15 @@ export default function DramaGenerator() {
   const gtt = useTranslations('generationTypes')
   const et = useTranslations('errors')
   const { addItem } = useDramaHistory()
+  const { user } = useUser()
+
+  // ── Daily usage ──
+  const today = new Date().toISOString().slice(0, 10)
+  const rawCount = (user?.user_metadata?.daily_generation_count as number) ?? 0
+  const lastDate = user?.user_metadata?.last_generation_date as string | undefined
+  const dailyUsed = lastDate === today ? rawCount : 0
+  const isLimitReached = user ? dailyUsed >= DAILY_LIMIT_FREE : false
+  const isPaid = user?.user_metadata?.paid === true
 
   // ── Error translation ──
   const translateError = (msg: string): string => {
@@ -506,18 +517,38 @@ export default function DramaGenerator() {
               <Button
                 variant="gradient"
                 size="lg"
-                disabled={selectedGenres.length === 0}
+                disabled={selectedGenres.length === 0 || (!isPaid && isLimitReached)}
                 onClick={handleGenerate}
                 className="whitespace-nowrap min-w-[220px] shadow-lg shadow-purple-500/20"
               >
-                {ct('generate')}
+                {isLimitReached && !isPaid
+                  ? (locale === 'zh-CN' ? '今日次数已用完' : 'Daily limit reached')
+                  : ct('generate')}
               </Button>
-              {!result && (
-                <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+              {!result && !isLimitReached && (
+                <p className="mt-2 text-xs text-gray-400">
                   {selectedGenres.length === 0
                     ? (locale === 'zh-CN' ? '选个题材开始创作' : 'Pick a genre to start')
-                    : (locale === 'zh-CN' ? '点击 ✨ 生成剧本' : 'Click ✨ to generate')}
+                    : (locale === 'zh-CN' ? '点击生成剧本' : 'Click to generate')}
                 </p>
+              )}
+              {/* ── Usage indicator ── */}
+              {user && !isPaid && (
+                <div className="mt-3 flex items-center justify-center gap-2 text-xs">
+                  <span className="text-gray-400">
+                    {locale === 'zh-CN'
+                      ? `今日已用 ${dailyUsed}/${DAILY_LIMIT_FREE} 次`
+                      : `Used ${dailyUsed}/${DAILY_LIMIT_FREE} today`}
+                  </span>
+                  {isLimitReached && (
+                    <a
+                      href={`/${locale}/pricing`}
+                      className="text-indigo-500 hover:text-indigo-400 font-medium underline underline-offset-2"
+                    >
+                      {locale === 'zh-CN' ? '升级Pro' : 'Upgrade to Pro'}
+                    </a>
+                  )}
+                </div>
               )}
             </>
           )}

@@ -67,7 +67,7 @@ interface ToastProps {
   onClose: () => void
 }
 
-const Toast: React.FC<ToastProps> = ({ message, type, visible, onClose }) => {
+function Toast({ message, type, visible, onClose }: ToastProps) {
   return (
     <div
       className={[
@@ -105,10 +105,10 @@ interface ToastContainerProps {
   removeToast: (id: number) => void
 }
 
-const ToastContainer: React.FC<ToastContainerProps> = ({
+function ToastContainer({
   toasts,
   removeToast,
-}) => {
+}: ToastContainerProps) {
   return (
     <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
       {toasts.map((t) => (

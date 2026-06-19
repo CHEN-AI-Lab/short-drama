@@ -103,7 +103,7 @@ export default function SignUpPage() {
               label={at('email')}
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               placeholder={at('emailPlaceholder')}
               required
               autoComplete="email"
@@ -113,7 +113,7 @@ export default function SignUpPage() {
               label={at('password')}
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               placeholder={at('passwordMinPlaceholder')}
               required
               autoComplete="new-password"
@@ -125,7 +125,7 @@ export default function SignUpPage() {
               label={at('confirmPassword')}
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
               placeholder={at('confirmPasswordPlaceholder')}
               required
               autoComplete="new-password"

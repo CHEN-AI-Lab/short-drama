@@ -84,7 +84,7 @@ export default function SignInPage() {
               label={at('email')}
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               placeholder={at('emailPlaceholder')}
               required
               autoComplete="email"
@@ -94,7 +94,7 @@ export default function SignInPage() {
               label={at('password')}
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               placeholder={at('passwordPlaceholder')}
               required
               autoComplete="current-password"

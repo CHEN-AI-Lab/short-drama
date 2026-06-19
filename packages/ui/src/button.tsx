@@ -1,9 +1,7 @@
-import React from 'react'
-
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'gradient' | 'danger' | 'outline'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   variant?: ButtonVariant
   size?: ButtonSize
   loading?: boolean
@@ -31,77 +29,54 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: 'px-6 py-3 text-lg rounded-xl',
 }
 
-const Spinner: React.FC = () => (
-  <svg
-    className="animate-spin h-4 w-4"
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-  >
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-    />
-  </svg>
-)
+function Button({
+  variant = 'primary',
+  size = 'md',
+  loading = false,
+  disabled,
+  className = '',
+  children,
+  ...rest
+}: ButtonProps) {
+  const isDisabled = disabled || loading
+  const stateClass = loading
+    ? 'cursor-wait'
+    : isDisabled
+      ? 'opacity-50 cursor-not-allowed'
+      : 'cursor-pointer'
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      variant = 'primary',
-      size = 'md',
-      loading = false,
-      disabled,
-      className = '',
-      children,
-      ...rest
-    },
-    ref
-  ) => {
-    const isDisabled = disabled || loading
-    const stateClass = loading
-      ? 'cursor-wait'
-      : isDisabled
-        ? 'opacity-50 cursor-not-allowed'
-        : 'cursor-pointer'
-
-    return (
-      <button
-        ref={ref}
-        disabled={isDisabled}
-        className={[
-          'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900',
-          variantStyles[variant],
-          sizeStyles[size],
-          stateClass,
-          className,
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        {...rest}
-      >
-        {loading ? (
-          <span className="inline-flex items-center gap-2">
-            <Spinner />
-          </span>
-        ) : (
-          children
-        )}
-      </button>
-    )
-  }
-)
-
-Button.displayName = 'Button'
+  return (
+    <button
+      disabled={isDisabled}
+      className={[
+        'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900',
+        variantStyles[variant],
+        sizeStyles[size],
+        stateClass,
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      {...rest}
+    >
+      {loading ? (
+        <span className="inline-flex items-center gap-2">
+          <svg
+            className="animate-spin h-4 w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        </span>
+      ) : (
+        children
+      )}
+    </button>
+  )
+}
 
 export default Button

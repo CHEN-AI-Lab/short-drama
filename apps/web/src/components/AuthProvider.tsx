@@ -1,17 +1,17 @@
 'use client'
 
-import {
+import React, {
   createContext,
   useContext,
   useState,
   useEffect,
   useRef,
-  type ReactNode,
 } from 'react'
 
 interface User {
   id: string
   email?: string
+  user_metadata?: Record<string, unknown>
 }
 
 interface UserContextValue {
@@ -30,7 +30,7 @@ export function useUser(): UserContextValue {
   return useContext(UserContext)
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const fetched = useRef(false)
@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({
             id: data.user.id,
             email: data.user.email,
+            user_metadata: data.user.user_metadata,
           })
         } else {
           setUser(null)

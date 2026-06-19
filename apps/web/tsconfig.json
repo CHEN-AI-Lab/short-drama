@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "preserve",
+    "skipLibCheck": true,
     "plugins": [
       {
         "name": "next"
