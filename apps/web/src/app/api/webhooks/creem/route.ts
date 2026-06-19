@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       },
     })
 
-    console.log(`Creem: Upgraded user ${userId} to Pro`)
+    console.warn(`Creem: Upgraded user ${userId} to Pro`)
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('Webhook error:', error)

@@ -251,10 +251,11 @@ ${jsonStructure}
 ## 创作要求
 1. 题材：${genreList}
 2. 集数：${epCountStr}
-3. 剧情有悬念和反转，节奏紧凑
-4. 角色性格鲜明
-5. 每集结尾有悬念钩子
-6. 全部中文输出
+3. 角色数量：4-8 人（主角 1-2 人、反派 1 人、配角 2-4 人），不要配角以下的小角色
+4. 剧情有悬念和反转，节奏紧凑
+5. 角色性格鲜明
+6. 每集结尾有悬念钩子
+7. 全部中文输出
 
 确保输出是有效 JSON，不要包含额外说明文字。`
   }
@@ -280,10 +281,11 @@ ${jsonStructure}
 ## Requirements
 1. Genres: ${genreList}
 2. Episodes: ${epCountStr}
-3. Plot must have suspense and twists
-4. Characters must have distinct personalities
-5. Each episode ends with a cliffhanger
-6. Output in English
+3. Characters: 4-8 total (1-2 protagonists, 1 antagonist, 2-4 supporting). No minor/extra characters beyond these.
+4. Plot must have suspense and twists
+5. Characters must have distinct personalities
+6. Each episode ends with a cliffhanger
+7. Output in English
 
 Ensure valid JSON output only.`
 }
