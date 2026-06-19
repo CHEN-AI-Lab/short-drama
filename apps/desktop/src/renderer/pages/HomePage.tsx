@@ -33,48 +33,49 @@ export default function HomePage() {
 
   const handleGenerate = useCallback(async () => {
     if (selectedGenres.length === 0) return
-
     setLoading(true)
-    setError(null)
     setResult(null)
-
-    const response = await generateDrama({
-      genres: selectedGenres,
-      episodeCount,
-      generationType,
-      locale: locale as Locale,
-      additionalInstructions: additionalInstructions.trim() || undefined,
-    })
-
-    setLoading(false)
-
-    if (response.error) {
-      setError(response.error)
-      return
-    }
-
-    setResult(response)
-
-    // Save to history (localStorage)
+    setError('')
     try {
-      const raw = localStorage.getItem(HISTORY_KEY)
-      const history = raw ? JSON.parse(raw) : []
-      const newItem = {
-        id: generateId(),
+      const res = await generateDrama({
         genres: selectedGenres,
-        title: response.title,
-        premise: response.premise,
         episodeCount,
-        locale,
-        timestamp: Date.now(),
-        result: response,
+        generationType,
+        locale: locale as Locale,
+        additionalInstructions: additionalInstructions.trim() || undefined,
+      })
+
+      if (res.error) {
+        setError(res.error)
+        return
       }
-      history.unshift(newItem)
-      // Keep max 200 items
-      if (history.length > 200) history.length = 200
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
-    } catch {
-      // localStorage may be full
+
+      setResult(res)
+
+      // Save to history (localStorage)
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY)
+        const history = raw ? JSON.parse(raw) : []
+        const newItem = {
+          id: generateId(),
+          genres: selectedGenres,
+          title: res.title,
+          premise: res.premise,
+          episodeCount,
+          locale,
+          timestamp: Date.now(),
+          result: res,
+        }
+        history.unshift(newItem)
+        if (history.length > 200) history.length = 200
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+      } catch {
+        // localStorage may be full
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Generation failed')
+    } finally {
+      setLoading(false)
     }
   }, [selectedGenres, episodeCount, generationType, locale, additionalInstructions])
 

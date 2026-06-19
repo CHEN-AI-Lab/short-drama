@@ -17,24 +17,9 @@ export default defineAppConfig({
     backgroundColor: '#fff',
     borderStyle: 'black',
     list: [
-      {
-        pagePath: 'pages/index/index',
-        text: '生成',
-        iconPath: 'assets/generate.png',
-        selectedIconPath: 'assets/generate-active.png',
-      },
-      {
-        pagePath: 'pages/history/index',
-        text: '历史',
-        iconPath: 'assets/history.png',
-        selectedIconPath: 'assets/history-active.png',
-      },
-      {
-        pagePath: 'pages/settings/index',
-        text: '设置',
-        iconPath: 'assets/settings.png',
-        selectedIconPath: 'assets/settings-active.png',
-      },
+      { pagePath: 'pages/index/index', text: '生成' },
+      { pagePath: 'pages/history/index', text: '历史' },
+      { pagePath: 'pages/settings/index', text: '设置' },
     ],
   },
 })

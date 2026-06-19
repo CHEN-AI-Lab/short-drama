@@ -56,7 +56,7 @@ function Input({
   readOnly,
   maxLength,
 }: InputProps) {
-  const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+  const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : 'input-field')
   const [showPassword, setShowPassword] = useState(false)
 
   const isPasswordWithToggle = type === 'password' && showPasswordToggle
@@ -65,7 +65,7 @@ function Input({
     : type
 
   const toggleBtnClass = [
-    'absolute inset-y-0 right-0 flex items-center pr-3',
+    'absolute inset-y-0 right-0 flex items-center px-2',
     'text-gray-400 hover:text-gray-600',
     'dark:hover:text-gray-300',
     'focus:outline-none',

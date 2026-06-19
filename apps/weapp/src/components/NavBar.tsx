@@ -6,7 +6,6 @@ export default function NavBar() {
   const pages = [
     { key: 'generate', icon: '✨', path: '/pages/index/index' },
     { key: 'history', icon: '📋', path: '/pages/history/index' },
-    { key: 'auth', icon: '👤', path: '/pages/auth/index' },
     { key: 'settings', icon: '⚙️', path: '/pages/settings/index' },
   ]
 
@@ -43,7 +42,6 @@ export default function NavBar() {
             }}>
               {p.key === 'generate' ? (isChinese() ? '生成' : 'Generate') :
                p.key === 'history' ? (isChinese() ? '历史' : 'History') :
-               p.key === 'auth' ? (isChinese() ? '账号' : 'Account') :
                (isChinese() ? '设置' : 'Settings')}
             </Text>
           </View>
