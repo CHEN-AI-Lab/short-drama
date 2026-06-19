@@ -57,7 +57,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
       "hook": "悬念钩子",
       "summary": "剧情概要（100-200字）",
       "scenes": [
-        { "location": "场景地点", "description": "场景描述", "duration": "时长", "characters": ["角色名"] }
+        { "location": "场景地点", "description": "场景描述", "duration": "约30秒-2分钟", "characters": ["角色名"] }
       ]
     }
   ]
@@ -111,7 +111,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
         {
           "location": "场景地点",
           "description": "场景描述",
-          "duration": "时长",
+          "duration": "约30秒-2分钟",
           "characters": ["角色名"],
           "dialogue": "完整对话内容"
         }
@@ -160,7 +160,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
       "hook": "Cliffhanger",
       "summary": "Plot summary",
       "scenes": [
-        { "location": "Location", "description": "Scene description", "duration": "Duration", "characters": ["Character names"] }
+        { "location": "Location", "description": "Scene description", "duration": "30s-2min", "characters": ["Character names"] }
       ]
     }
   ]
@@ -214,7 +214,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
         {
           "location": "Location",
           "description": "Scene description",
-          "duration": "Duration",
+          "duration": "30s-2min",
           "characters": ["Character names"],
           "dialogue": "Full dialogue"
         }
@@ -279,10 +279,11 @@ ${jsonStructure}
 1. 题材：${genreList}
 2. 集数：${epCountStr}
 3. **角色数量上限 ${MAX_CHARS} 人**（主角 1-2 人、反派 0-1 人），在此范围内根据剧情自由决定。
-4. 剧情有悬念和反转，节奏紧凑
-5. 角色性格鲜明
-6. 每集结尾有悬念钩子
-7. 全部中文输出
+4. **每集总时长 1-5 分钟**，场景时长对应内容量——几句对白的场景 30 秒，多场景的加长到 2 分钟。内容少的集时长自然短。
+5. 剧情有悬念和反转，节奏紧凑
+6. 角色性格鲜明
+7. 每集结尾有悬念钩子
+8. 全部中文输出
 
 确保输出是有效 JSON，不要包含额外说明文字。`
   }
@@ -309,10 +310,11 @@ ${jsonStructure}
 1. Genres: ${genreList}
 2. Episodes: ${epCountStr}
 3. **Up to ${MAX_CHARS} characters** (1-2 protagonists, 0-1 antagonist). AI decides the exact count within this range based on the story.
-4. Plot must have suspense and twists
-5. Characters must have distinct personalities
-6. Each episode ends with a cliffhanger
-7. Output in English
+4. **Each episode: 1-5min total**. Scene duration proportional to content — a few lines of dialogue = 30s, multi-scene episodes up to 2min per scene. Less content = shorter duration naturally.
+5. Plot must have suspense and twists
+6. Characters must have distinct personalities
+7. Each episode ends with a cliffhanger
+8. Output in English
 
 Ensure valid JSON output only.`
 }
