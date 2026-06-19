@@ -332,13 +332,17 @@ export async function POST(request: Request) {
       }))
 
     // ── Return result ──
-    const characters: Character[] = normalizeCharacters(generationResponse.characters)
+    const MAX_CHARACTERS = 8
+    const characters: Character[] = normalizeCharacters(generationResponse.characters).slice(0, MAX_CHARACTERS)
+    const keptNames = new Set(characters.map((c) => c.name))
     const episodes: EpisodeOutline[] = normalizeEpisodes(generationResponse.episodes)
     const targetCount = autoEpisodeCount ? episodes.length : episodeCount
     const trimmedEpisodes = episodes.slice(0, targetCount)
     const renumberedEpisodes = trimmedEpisodes.map((ep, i) => ({ ...ep, episode: i + 1 }))
     const characterArcs: CharacterArc[] = normalizeArcs(generationResponse.characterArcs || generationResponse.character_arcs, characters)
-    const fixedArcs = characterArcs.map((arc) => ({
+    // Only keep arcs for the kept characters
+    const keptArcs = characterArcs.filter((a) => keptNames.has(a.character.name))
+    const fixedArcs = keptArcs.map((arc) => ({
       ...arc,
       episodes: arc.episodes.filter((ep) => ep.episode <= targetCount).map((ep) => ({ ...ep })),
     }))
