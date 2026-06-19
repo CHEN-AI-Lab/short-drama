@@ -24,8 +24,8 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
       ? `严格生成 ${episodeCount} 集${startEpisode ? '（从第 ' + startEpisode + ' 集开始）' : ''}`
       : `${episodeCount} episodes${startEpisode ? ' (starting from ep ' + startEpisode + ')' : ''}`)
 
-  // ── Dynamic character limit based on episode count ──
-  const charLimit = autoEpisodeCount ? 5 : episodeCount <= 3 ? 3 : episodeCount <= 10 ? 4 : 6
+  // ── Character cap (generous, AI decides exact count within this) ──
+  const MAX_CHARS = 6
 
   // ── Per-type JSON structures ──
   const zhStructure: Record<string, string> = {
@@ -278,7 +278,7 @@ ${jsonStructure}
 ## ⚠️ 硬性要求（必须遵守）
 1. 题材：${genreList}
 2. 集数：${epCountStr}
-3. **角色数量严格限制 ${charLimit} 人以内**（主角最多 2 人、反派最多 1 人）。**绝对不允许超过 ${charLimit} 人，不允许出现路人/龙套/次要角色。**
+3. **角色数量上限 ${MAX_CHARS} 人**（主角 1-2 人、反派 0-1 人），在此范围内根据剧情自由决定。
 4. 剧情有悬念和反转，节奏紧凑
 5. 角色性格鲜明
 6. 每集结尾有悬念钩子
@@ -308,7 +308,7 @@ ${jsonStructure}
 ## ⚠️ Hard Rules (must follow)
 1. Genres: ${genreList}
 2. Episodes: ${epCountStr}
-3. **Strict limit: ${charLimit} characters total** (max 2 protagonists, 1 antagonist). **Absolutely no minor/extra characters under any circumstances.**
+3. **Up to ${MAX_CHARS} characters** (1-2 protagonists, 0-1 antagonist). AI decides the exact count within this range based on the story.
 4. Plot must have suspense and twists
 5. Characters must have distinct personalities
 6. Each episode ends with a cliffhanger

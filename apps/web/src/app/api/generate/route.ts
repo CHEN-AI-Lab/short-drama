@@ -332,7 +332,7 @@ export async function POST(request: Request) {
       }))
 
     // ── Return result ──
-    const MAX_CHARACTERS = autoEpisodeCount ? 5 : episodeCount <= 3 ? 3 : episodeCount <= 10 ? 4 : 6
+    const MAX_CHARACTERS = 6
     const characters: Character[] = normalizeCharacters(generationResponse.characters).slice(0, MAX_CHARACTERS)
     const keptNames = new Set(characters.map((c) => c.name))
     const episodes: EpisodeOutline[] = normalizeEpisodes(generationResponse.episodes)
