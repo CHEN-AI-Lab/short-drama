@@ -253,10 +253,6 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   const tn = typename[generationType] || typename.full_script
   const td = typedesc[generationType] || typedesc.full_script
 
-  const extra = (isChinese ? generationType === 'character' : generationType === 'character')
-    ? (isChinese ? '\n建议生成 3-6 个角色，每个角色详细刻画。' : '\nGenerate 3-6 detailed characters.')
-    : ''
-
   if (isChinese) {
     const batchHeader = startEpisode
       ? `\n## 分批生成说明\n这是第 ${startEpisode} 集起后续部分的生成请求。之前已生成：${existingSummary || '剧情已展开'}。请继续推进剧情，保持人物连贯性。`
@@ -269,17 +265,17 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
     return `你是一位专业的短剧剧本创作大师。请根据用户需求${tn === '分集大纲' ? '生成一份分集大纲' : tn === '场景拆分' ? '进行场景拆分' : tn === '人物弧光' ? '设计人物弧光' : '创作完整剧本'}。${batchHeader}${autoSignal}
 
 ## 当前模式：${tn}
-${td}${extra}
+${td}
 
 ## 输出格式要求
 严格按照以下 JSON 结构输出，不要添加多余字段：
 
 ${jsonStructure}
 
-## 创作要求
+## ⚠️ 硬性要求（必须遵守）
 1. 题材：${genreList}
 2. 集数：${epCountStr}
-3. 角色数量：4-8 人（主角 1-2 人、反派 1 人、配角 2-4 人），不要配角以下的小角色
+3. **角色数量严格限制 4-8 人**（主角最多 2 人、反派最多 1 人、配角最多 4 人）。**绝对不允许超过 8 人，不允许出现路人/龙套/次要角色。**
 4. 剧情有悬念和反转，节奏紧凑
 5. 角色性格鲜明
 6. 每集结尾有悬念钩子
@@ -299,17 +295,17 @@ ${jsonStructure}
   return `You are a professional short drama scriptwriter. Generate content based on user request.${batchHeaderEn}${autoSignalEn}
 
 ## Current Mode: ${tn}
-${td}${extra}
+${td}
 
 ## Output Format Requirements
 Strictly follow this JSON structure, no extra fields:
 
 ${jsonStructure}
 
-## Requirements
+## ⚠️ Hard Rules (must follow)
 1. Genres: ${genreList}
 2. Episodes: ${epCountStr}
-3. Characters: 4-8 total (1-2 protagonists, 1 antagonist, 2-4 supporting). No minor/extra characters beyond these.
+3. **Strict limit: 4-8 characters total** (max 2 protagonists, 1 antagonist, 4 supporting). **Absolutely no minor/extra characters under any circumstances.**
 4. Plot must have suspense and twists
 5. Characters must have distinct personalities
 6. Each episode ends with a cliffhanger
