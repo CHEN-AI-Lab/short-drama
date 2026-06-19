@@ -121,15 +121,15 @@ export async function POST(request: Request) {
           } catch {
             // Try to repair
             let repaired = candidate
-              .replace(/,\s*}/g, '}')
-              .replace(/,\s*]/g, ']')
-              // Quote ALL unquoted values after : (Chinese characters, unquoted words, etc.)
-              .replace(/:\s*([A-Za-z\u4e00-\u9fff_][^,}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
-              // Also fix unquoted values with digits mixed in (like "30岁" or "未知1")
-              .replace(/:\s*([^"{\[0-9tfn\-][^,}\]]*?)([,}\]])/g, ': "$1"$2')
-              // Final pass: catch any remaining :value patterns without quotes
-              .replace(/:\s+([^"{\[0-9tfn\-][^,\]}]*)([,}\]])/g, ': "$1"$2')
-              try {
+                          .replace(/,\s*}/g, '}')
+                          .replace(/,\s*]/g, ']')
+                          // Quote values starting with Chinese/letters (like 未知, 外表18)
+                          .replace(/:\s*([A-Za-z\u4e00-\u9fff_][^,}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
+                          // Quote values starting with digits but containing non-digit chars (like 500+, 30岁)
+                          .replace(/:\s*(\d+[^"0-9,}\]]+?)(\s*[,}\]])/g, ': "$1"$2')
+                          // Catch any remaining unquoted values
+                          .replace(/:\s+([^"{\[0-9tfn\-][^,\]}]*)([,}\]])/g, ': "$1"$2')
+            try {
               generationResponse = JSON.parse(repaired)
               break
             } catch { continue }
