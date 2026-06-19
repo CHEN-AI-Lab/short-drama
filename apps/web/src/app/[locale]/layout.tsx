@@ -64,6 +64,12 @@ export default async function LocaleLayout({ children, params }: Props) {
         <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 mt-16">
           <div className="max-w-5xl mx-auto px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
             <p>&copy; {new Date().getFullYear()} {t('appName')}. {t('allRights')}</p>
+            <Link
+              href={`/${locale}/admin`}
+              className="inline-block mt-2 text-xs text-gray-400 hover:text-purple-500 dark:hover:text-purple-400 transition-colors"
+            >
+              Admin / 管理后台
+            </Link>
           </div>
         </footer>
       </AuthProvider>

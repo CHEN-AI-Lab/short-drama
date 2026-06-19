@@ -78,6 +78,7 @@ export default function DramaGenerator() {
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number | string } | null>(null)
   const resultRef = useRef<HTMLDivElement>(null)
   const BATCH_SIZE = 3 // episodes per batch (fits Vercel Hobby 10s limit)
+  const MAX_AUTO_BATCHES = 20 // auto mode safety limit: at most 60 episodes (20 × 3)
 
   // ── Restore state from URL params (from history page) ──
   useEffect(() => {
@@ -150,7 +151,7 @@ export default function DramaGenerator() {
     setLoading(true)
 
     const targetCount = autoEpisodeCount ? 0 : episodeCount
-    const batchCount = autoEpisodeCount ? 999 : Math.ceil(targetCount / BATCH_SIZE)
+    const batchCount = autoEpisodeCount ? MAX_AUTO_BATCHES : Math.ceil(targetCount / BATCH_SIZE)
 
     let merged: GenerationResponse = { title: '', premise: '', characters: [], episodes: [], characterArcs: [] }
     const seenCharNames = new Set<string>()
@@ -158,7 +159,7 @@ export default function DramaGenerator() {
 
     try {
       for (let batch = 0; batch < batchCount; batch++) {
-        setBatchProgress({ current: batch + 1, total: autoEpisodeCount ? '?' : String(batchCount) })
+        setBatchProgress({ current: batch + 1, total: autoEpisodeCount ? String(MAX_AUTO_BATCHES) : String(batchCount) })
 
         const startEp = merged.episodes.length + 1
         const epInBatch = autoEpisodeCount ? BATCH_SIZE : Math.min(BATCH_SIZE, targetCount - batch * BATCH_SIZE)
@@ -169,7 +170,7 @@ export default function DramaGenerator() {
           ...parseResult.data,
           startEpisode: startEp,
           episodeCount: epInBatch,
-          autoEpisodeCount: false, // use fixed count per batch
+          autoEpisodeCount, // pass through the original flag so prompt includes storyComplete signal
         }
 
         const res = await generateDrama(req as any)
@@ -207,8 +208,8 @@ export default function DramaGenerator() {
           }
         }
 
-        // Auto mode: stop when AI returns fewer episodes than requested (story is complete)
-        if (autoEpisodeCount && (res.episodes || []).length < BATCH_SIZE) break
+        // Auto mode: stop when AI signals the story is complete (storyComplete: true)
+        if (autoEpisodeCount && res.storyComplete === true) break
       }
 
       if (merged.episodes.length === 0) {

@@ -64,8 +64,8 @@ describe('generationRequestSchema', () => {
     const result = generationRequestSchema.parse({
       genres: ['ceo'],
     })
-    expect(result.episodeCount).toBe(50)
-    expect(result.generationType).toBe('outline')
+    expect(result.episodeCount).toBe(10)
+    expect(result.generationType).toBe('full_script')
     expect(result.locale).toBe('zh-CN')
   })
 
@@ -282,8 +282,8 @@ describe('Zod validation edge cases', () => {
   it('accepts valid minimal input', () => {
     const result = generationRequestSchema.parse({ genres: ['ceo'] })
     expect(result.genres).toEqual(['ceo'])
-    expect(result.episodeCount).toBe(50)  // default
-    expect(result.generationType).toBe('outline')  // default
+    expect(result.episodeCount).toBe(10)  // default
+    expect(result.generationType).toBe('full_script')  // default
     expect(result.locale).toBe('zh-CN')  // default
   })
 

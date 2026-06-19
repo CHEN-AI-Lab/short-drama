@@ -1,68 +1,94 @@
 # Progress
 
 ## Current State
-- Project scaffold created: Harness skeleton, shared layer, apps/web setup
-- Core types and constants defined
-- AI generation API route implemented
-- UI components built (InputPanel, OutputPanel, CharacterPanel, ScriptPreview)
-- i18n bilingual support (zh-CN + en)
-- Supabase auth integration
-- Tests scaffolded
+
+Production-ready SaaS application deployed on Vercel. Full auth, AI generation, payments, admin dashboard, and bilingual i18n.
 
 ## Completed
-- [x] Harness skeleton (docs, scripts, CI/CD, CLAUDE.md, README)
+
+### Core Infrastructure
+- [x] Harness skeleton (CLAUDE.md, docs, scripts, CI/CD, README)
+- [x] pnpm monorepo with shared/ + packages/ui + apps/web
 - [x] Shared types (DramaGenre, Character, EpisodeOutline, Scene, etc.)
 - [x] Shared constants, validators, utils, API client, hooks
-- [x] packages/ui components (Button, Input, Badge, Card)
-- [x] apps/web: Next.js app with layouts, i18n, middleware
-- [x] API route `/api/generate` with SenseTime AI
-- [x] Home page, sign-in, sign-up, pricing, success, admin pages
-- [x] Unit tests for shared layer
-- [x] CI/CD pipeline
-- [x] Vercel deployment (short-drama-iota.vercel.app)
+- [x] packages/ui components (Button, Input with password toggle, Badge, Card, GenrePill, Toast)
+- [x] Full i18n (zh-CN + en) via next-intl v4
+- [x] Tailwind CSS v4 + dark mode
+
+### Auth System
+- [x] Supabase email/password sign-up with auto-confirm (service role)
+- [x] Auth callback route with Google OAuth
+- [x] sign-in, sign-up, logout pages
+- [x] Password visibility toggle (eye icon) on all password fields
+- [x] middleware.ts with Supabase SSR + next-intl
+
+### AI Generation
+- [x] `/api/generate` — SenseTime AI with backup provider fallback
+- [x] 4 generation modes: outline, scene, character, full_script
+- [x] Batch generation (3 eps/batch) for Vercel Hobby 10s limit
+- [x] JSON repair strategies for malformed AI output
+- [x] Multi-provider fallback (SenseTime → Backup)
+- [x] Daily limit enforcement (3/day for free users, 429 on exceeded)
+
+### Payment
+- [x] Creem checkout API (`/api/checkout`)
+- [x] Creem webhook handler (`/api/webhooks/creem`) with HMAC-SHA256 verification
+- [x] User metadata update on successful payment
+- [x] Payment status caching (localStorage + server revalidation)
+- [x] Pricing page (Free + Pro tiers)
+- [x] Success page with countdown redirect
+
+### Pages
+- [x] Home — drama generation interface with genre selection
+- [x] History — 7-day localStorage history with delete/clear/review
+- [x] Pricing — Free/Pro comparison with subscribe button
+- [x] Admin — live dashboard with user stats (via Supabase admin API)
+- [x] Success — payment callback with status feedback
+- [x] Error — graceful error page with retry
+- [x] sitemap.xml + robots.ts for SEO
+
+### Testing
+- [x] 33 unit tests for shared types, validators, utils, prompts, formats
+- [x] E2E smoke tests for home page (zh-CN + en)
+- [x] Full quality check (typecheck + tests + build)
+
+### Deployment
+- [x] Vercel project configured
+- [x] CI/CD via GitHub Actions
+- [x] Build passes cleanly (all routes compile)
 
 ## 2026-06-11: Full Polish Pass
+- [x] SEO optimization (sitemap, robots, metadata, favicon)
+- [x] Visual polish (gradient orbs, animations, card hover, reduced motion)
+- [x] History integration with localStorage persistence
+- [x] Creem payment integration
 
-### 1. SEO 优化
-- [x] sitemap.ts — 10 URLs (5 pages × 2 locales)
-- [x] robots.ts — allow /, disallow /api/ and /admin
-- [x] Enhanced root layout metadata (title template, OG, favicon)
-- [x] SVG favicon with gradient
+## 2026-06-19: Feature Completion Pass
+- [x] Password visibility toggle on sign-in/sign-up
+- [x] Daily limit enforcement for free users (3/day)
+- [x] Admin API endpoint with real Supabase stats
+- [x] Admin page with live stats (total users, paid users, generation counts)
+- [x] Admin link in footer
+- [x] Fixed unit test expectations (episodeCount default 10, generationType default full_script)
+- [x] Full quality gate passed (33 tests, clean build)
 
-### 2. 视觉精修
-- [x] Ambient gradient orbs + float animation on hero
-- [x] Gradient heading text (text-gradient utility)
-- [x] Animated page load (fade-in-up, stagger-children)
-- [x] Card hover lift effect (card-hover class)
-- [x] Section headers with accent bar
-- [x] Reduced motion support
-
-### 3. 功能增强
-- [x] History integration: useDramaHistory connected to DramaGenerator
-- [x] `/history` page with list, clear, empty state
-- [x] Nav links (生成, 历史, 定价)
-- [x] TXT export button in result section
-- [x] Full zh-CN + en translations for history
-
-### 4. 付费集成
-- [x] Real Creem checkout API (`/api/checkout`)
-- [x] Creem webhook handler (`/api/webhooks/creem`)
-- [x] Signature verification via HMAC-SHA256
-- [x] Updates user_metadata + app_metadata on payment
-- [x] Falls back gracefully when Creem keys missing
-
-### 5. 部署
-- [x] Git commit + push to GitHub
-- [x] Vercel redeploy (production URL: short-drama-iota.vercel.app)
-- [x] Verified: home, history, sitemap, robots, English nav all working
+## Bug Fix: Auto Episode Mode — AI Completion Signal
+- [x] Fixed: auto episode count now uses AI-generated `storyComplete` signal
+  - Root cause: stop condition `res.episodes.length < BATCH_SIZE` was always false (API returns exactly 3 per batch), causing infinite loop
+  - Fix: AI now outputs `"storyComplete": true/false` in JSON based on whether the story reached its natural conclusion
+  - Frontend reads `res.storyComplete === true` to stop, falls back to `MAX_AUTO_BATCHES = 20` safety limit
+  - Prompt updated to instruct AI about the `storyComplete` field (both zh-CN and en)
+  - API route passes through `storyComplete` from AI response
 
 ## Known Issues
-- [ ] Nav links in mobile menu are hidden (sm:flex) — no hamburger menu yet
-- [ ] Creem webhook signature verification not tested end-to-end (needs Creem to send test event)
+- [ ] Mobile hamburger menu not implemented (nav is sm:flex, no hamburger)
+- [ ] Creem webhook signature verification not tested end-to-end
 - [ ] History is localStorage-only — clearing browser data loses it
+- [ ] Generated stats are approximate (metadata-based, not transactional)
 
 ## Next Steps
 - [ ] Add more drama genres based on market trends
 - [ ] Mobile hamburger menu
-- [ ] Script export PDF (currently only TXT)
+- [ ] Script export PDF
 - [ ] Collaborative editing features
+- [ ] Database layer for persistent history

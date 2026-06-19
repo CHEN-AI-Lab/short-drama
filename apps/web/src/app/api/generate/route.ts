@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
-import { generationRequestSchema, buildGenerationPrompt, buildUserPrompt } from 'shared'
+import { generationRequestSchema, buildGenerationPrompt, buildUserPrompt, DAILY_LIMIT_FREE } from 'shared'
 import type { Character, EpisodeOutline, CharacterArc } from 'shared'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -11,9 +13,72 @@ export async function POST(request: Request) {
     const parsed = generationRequestSchema.parse(body)
     const { genres, episodeCount, generationType, locale, additionalInstructions, autoEpisodeCount, startEpisode } = parsed
 
+    // ── Auth and daily limit check ──
+    let authenticatedUserId: string | null = null
+    let dailyCountForIncrement = 0
+    let shouldIncrementCount = false
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        const cookieStore = await cookies()
+        const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll()
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                try {
+                  cookieStore.set(name, value, options)
+                } catch {
+                  // `set` may throw in middleware — silently ignore
+                }
+              })
+            },
+          },
+        })
+
+        const { data } = await supabase.auth.getUser()
+        const user = data?.user
+
+        if (user) {
+          const metadata = user.user_metadata || {}
+          const appMeta = user.app_metadata || {}
+          const isPaid = metadata?.paid === true || appMeta?.paid === true || appMeta?.role === 'pro'
+
+          if (!isPaid) {
+            const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+            const lastDate = metadata?.last_generation_date
+            let dailyCount = metadata?.daily_generation_count ?? 0
+
+            if (lastDate !== today) {
+              dailyCount = 0
+            }
+
+            if (dailyCount >= DAILY_LIMIT_FREE) {
+              return NextResponse.json(
+                { error: 'Daily limit reached. Please upgrade to Pro for unlimited access.' },
+                { status: 429 }
+              )
+            }
+
+            authenticatedUserId = user.id
+            dailyCountForIncrement = dailyCount
+            shouldIncrementCount = true
+          }
+        }
+      } catch (err) {
+        // Auth check failed (no cookies, network error, etc.) — allow the request through
+        console.warn('Auth check failed, proceeding without limit:', err)
+      }
+    }
+
     // ── Build prompts ──
     const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary: '剧情已展开' })
-    const userPrompt = buildUserPrompt({ genres, episodeCount: autoEpisodeCount ? 30 : episodeCount, generationType, additionalInstructions })
+    const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, additionalInstructions })
 
     // ── Call AI API with provider fallback ──
     // Primary: OPENAI_* env vars. Backup: BACKUP_* env vars (optional).
@@ -179,6 +244,30 @@ export async function POST(request: Request) {
       )
     }
 
+    // ── Increment daily generation count for free users ──
+    if (shouldIncrementCount && authenticatedUserId) {
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (supabaseUrl && serviceRoleKey) {
+        try {
+          const serviceClient = createServerClient(supabaseUrl, serviceRoleKey, {
+            cookies: {
+              getAll() { return [] },
+              setAll() {},
+            },
+          })
+          const today = new Date().toISOString().slice(0, 10)
+          await serviceClient.auth.admin.updateUserById(authenticatedUserId, {
+            user_metadata: {
+              daily_generation_count: dailyCountForIncrement + 1,
+              last_generation_date: today,
+            },
+          })
+        } catch (err) {
+          console.warn('Failed to update daily generation count:', err)
+        }
+      }
+    }
+
     // ── Transform AI response ──
     const normalizePersonality = (val: unknown): string[] => {
       if (Array.isArray(val)) return val.filter(Boolean)
@@ -260,6 +349,7 @@ export async function POST(request: Request) {
       characters,
       episodes: renumberedEpisodes,
       characterArcs: fixedArcs,
+      storyComplete: generationResponse.storyComplete === true,
     })
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') {

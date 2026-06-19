@@ -118,6 +118,7 @@ export default function SignUpPage() {
               required
               autoComplete="new-password"
               minLength={8}
+              showPasswordToggle
             />
 
             <Input
@@ -128,6 +129,7 @@ export default function SignUpPage() {
               placeholder={at('confirmPasswordPlaceholder')}
               required
               autoComplete="new-password"
+              showPasswordToggle
             />
 
             {error && (

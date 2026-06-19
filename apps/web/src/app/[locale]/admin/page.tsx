@@ -12,13 +12,15 @@ interface AdminStats {
   todayGenerations: number
 }
 
+const ADMIN_EMAIL = 'phoebe.yanxi@gmail.com'
+
 export default function AdminPage() {
   const t = useTranslations()
   const at = useTranslations('admin')
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [stats] = useState<AdminStats>({
+  const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     paidUsers: 0,
     totalGenerations: 0,
@@ -34,16 +36,18 @@ export default function AdminPage() {
 
         const data = await res.json()
 
-        // Check if user is admin (by email or user_metadata)
+        // Check if user is the project admin
         const user = data.user
         if (user) {
           const isAdminUser =
-            user.email === 'admin@example.com' ||
+            user.email?.toLowerCase() === ADMIN_EMAIL ||
             user.user_metadata?.role === 'admin' ||
             user.app_metadata?.role === 'admin'
 
           if (isAdminUser) {
             setIsAdmin(true)
+            // Fetch real stats
+            fetchStats()
           } else {
             setError(at('accessDenied'))
           }
@@ -54,6 +58,18 @@ export default function AdminPage() {
         setError(at('authFailed'))
       } finally {
         setLoading(false)
+      }
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/admin/stats')
+        if (res.ok) {
+          const data = await res.json()
+          setStats(data)
+        }
+      } catch {
+        // Stats are optional — keep defaults on error
       }
     }
 

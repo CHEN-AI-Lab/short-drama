@@ -60,6 +60,8 @@ export interface GenerationResponse {
   characters: Character[]
   episodes: EpisodeOutline[]
   characterArcs: CharacterArc[]
+  /** Auto mode: AI signals when the story reaches its natural conclusion */
+  storyComplete?: boolean
   error?: string
 }
 

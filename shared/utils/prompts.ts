@@ -234,7 +234,11 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
       ? `\n## 分批生成说明\n这是第 ${startEpisode} 集起后续部分的生成请求。之前已生成：${existingSummary || '剧情已展开'}。请继续推进剧情，保持人物连贯性。`
       : ''
 
-    return `你是一位专业的短剧剧本创作大师。请根据用户需求${tn === '分集大纲' ? '生成一份分集大纲' : tn === '场景拆分' ? '进行场景拆分' : tn === '人物弧光' ? '设计人物弧光' : '创作完整剧本'}。${batchHeader}
+    const autoSignal = autoEpisodeCount
+      ? `\n\n## 自动集数模式\n请根据剧情自然走向决定故事长度。每次输出的 JSON 中必须额外包含 "storyComplete" 字段：\n- 如果剧情已到自然结尾（所有主要冲突已解决，故事有完整收尾），设为 true\n- 如果故事仍需继续（还有悬念未解、新冲突即将展开），设为 false\n- 该字段在 JSON 顶层，与 title、episodes 同级`
+      : ''
+
+    return `你是一位专业的短剧剧本创作大师。请根据用户需求${tn === '分集大纲' ? '生成一份分集大纲' : tn === '场景拆分' ? '进行场景拆分' : tn === '人物弧光' ? '设计人物弧光' : '创作完整剧本'}。${batchHeader}${autoSignal}
 
 ## 当前模式：${tn}
 ${td}${extra}
@@ -259,7 +263,11 @@ ${jsonStructure}
     ? `\n\n## Batch Generation\nThis is a continuation request starting from episode ${startEpisode}. Previously generated: ${existingSummary || 'the story has started'}. Continue the plot naturally, keeping characters consistent.`
     : ''
 
-  return `You are a professional short drama scriptwriter. Generate content based on user request.${batchHeaderEn}
+  const autoSignalEn = autoEpisodeCount
+    ? `\n\n## Auto Episode Mode\nDecide the story length naturally. Each JSON response must include a "storyComplete" field at the top level:\n- Set to true if the story has reached its natural conclusion (all major conflicts resolved, proper ending)\n- Set to false if the story continues (unresolved cliffhangers, new conflicts brewing)`
+    : ''
+
+  return `You are a professional short drama scriptwriter. Generate content based on user request.${batchHeaderEn}${autoSignalEn}
 
 ## Current Mode: ${tn}
 ${td}${extra}

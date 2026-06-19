@@ -98,6 +98,7 @@ export default function SignInPage() {
               placeholder={at('passwordPlaceholder')}
               required
               autoComplete="current-password"
+              showPasswordToggle
             />
 
             {error && (
