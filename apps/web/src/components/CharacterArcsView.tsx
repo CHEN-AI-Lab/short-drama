@@ -61,7 +61,7 @@ export default function CharacterArcsView({
             <CardContent className="space-y-4">
               {/* Character header */}
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex items-center gap-3">
                   <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {char.name}
                   </h4>
@@ -71,25 +71,13 @@ export default function CharacterArcsView({
                 </div>
               </div>
 
-              {/* Personality tags */}
-              {char.personality && char.personality.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {char.personality.map((trait) => (
-                    <span
-                      key={trait}
-                      className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
-                    >
-                      {trait}
-                    </span>
-                  ))}
+              {/* Overall arc — the key content */}
+              {char.arc && (
+                <div className="rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100 dark:border-indigo-900/50 px-4 py-3">
+                  <p className="text-sm text-indigo-800 dark:text-indigo-200 leading-relaxed italic">
+                    &ldquo;{char.arc}&rdquo;
+                  </p>
                 </div>
-              )}
-
-              {/* Background */}
-              {char.background && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {char.background}
-                </p>
               )}
 
               {/* Episode timeline */}

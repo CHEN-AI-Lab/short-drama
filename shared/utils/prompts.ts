@@ -76,7 +76,14 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
     { "episodeNumber": 1, "title": "第1集标题", "summary": "剧情概要" }
   ],
   "characterArcs": [
-    { "characterId": "char_1", "arc": "成长弧光描述" }
+    {
+      "name": "角色名",
+      "arc": "整体成长弧光：从初始状态到最终蜕变的完整描述",
+      "episodes": [
+        { "episode": 1, "change": "本集中的角色心态/认知/能力关键转变" }
+      ],
+      "finalState": "角色最终结局与改变总结"
+    }
   ]
 }`,
     full_script: `{
@@ -109,7 +116,14 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
     }
   ],
   "characterArcs": [
-    { "characterId": "char_1", "arc": "成长弧光描述" }
+    {
+      "name": "角色名",
+      "arc": "整体成长弧光：从初始状态到最终蜕变的完整描述",
+      "episodes": [
+        { "episode": 1, "change": "本集中的角色心态/认知/能力关键转变" }
+      ],
+      "finalState": "角色最终结局与改变总结"
+    }
   ]
 }`,
   }
@@ -165,7 +179,14 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
     { "episodeNumber": 1, "title": "Episode 1 title", "summary": "Plot summary" }
   ],
   "characterArcs": [
-    { "characterId": "char_1", "arc": "Growth arc description" }
+    {
+      "name": "Character name",
+      "arc": "Complete transformation arc from initial state to final outcome",
+      "episodes": [
+        { "episode": 1, "change": "Key shift in character's mindset/knowledge/power in this episode" }
+      ],
+      "finalState": "Character's final outcome and growth summary"
+    }
   ]
 }`,
     full_script: `{
@@ -198,10 +219,17 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
     }
   ],
   "characterArcs": [
-    { "characterId": "char_1", "arc": "Growth arc description" }
+    {
+      "name": "Character name",
+      "arc": "Complete transformation arc from initial state to final outcome",
+      "episodes": [
+        { "episode": 1, "change": "Key shift in character's mindset/knowledge/power in this episode" }
+      ],
+      "finalState": "Character's final outcome and growth summary"
+    }
   ]
 }`,
-  }
+}
 
   const typename: Record<string, string> = isChinese
     ? { outline: '分集大纲', scene: '场景拆分', character: '人物弧光', full_script: '完整剧本' }
