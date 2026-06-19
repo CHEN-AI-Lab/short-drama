@@ -292,28 +292,43 @@ export interface BuildUserPromptParams {
   genres: string[]
   episodeCount: number
   generationType: string
+  locale?: string
   additionalInstructions?: string
 }
 
 export function buildUserPrompt(params: BuildUserPromptParams): string {
-  const { genres, episodeCount, generationType, additionalInstructions } = params
+  const { genres, episodeCount, generationType, locale, additionalInstructions } = params
+  const isChinese = locale === 'zh-CN'
   const genreList = genres.join(' + ')
 
-  const typeInstructions: Record<string, string> = {
-    outline: 'Generate a detailed episode-by-episode outline with hooks and summaries only (no full dialogue, no scene details).',
-    scene: 'For each episode, provide a complete scene breakdown including locations, durations, and character appearances (no dialogue).',
-    character: 'Focus on character development arcs. Include detailed personality profiles, backstories, and how each character changes across the episodes.',
-    full_script: 'Generate the complete script with full dialogue for all scenes across all episodes.',
-  }
+  const typeInstructions: Record<string, string> = isChinese
+    ? {
+        outline: '生成详细的每集大纲（含标题、悬念钩子和剧情概要），不需要场景和对白。',
+        scene: '每集提供场景拆分（地点、时长、出场角色），不需要对白。',
+        character: '重点刻画角色发展弧光，包含详细的性格档案、背景故事以及角色在各集中的变化。',
+        full_script: '生成完整的剧本，包含所有场景的详细对白。',
+      }
+    : {
+        outline: 'Generate a detailed episode-by-episode outline with hooks and summaries only (no full dialogue, no scene details).',
+        scene: 'For each episode, provide a complete scene breakdown including locations, durations, and character appearances (no dialogue).',
+        character: 'Focus on character development arcs. Include detailed personality profiles, backstories, and how each character changes across the episodes.',
+        full_script: 'Generate the complete script with full dialogue for all scenes across all episodes.',
+      }
 
   const baseInstruction = typeInstructions[generationType] || typeInstructions.outline
 
-  let prompt = `Generate a ${genreList} short drama with ${episodeCount} episodes.`
-  prompt += `\n\nGeneration type: ${generationType}`
+  let prompt = isChinese
+    ? `生成一部 ${genres.join('、')} 题材的短剧，共 ${episodeCount} 集。`
+    : `Generate a ${genreList} short drama with ${episodeCount} episodes.`
+  prompt += isChinese
+    ? `\n\n生成类型：${generationType === 'outline' ? '分集大纲' : generationType === 'scene' ? '场景拆分' : generationType === 'character' ? '人物弧光' : '完整剧本'}`
+    : `\n\nGeneration type: ${generationType}`
   prompt += `\n${baseInstruction}`
 
   if (additionalInstructions) {
-    prompt += `\n\nAdditional instructions: ${additionalInstructions}`
+    prompt += isChinese
+      ? `\n\n额外指令：${additionalInstructions}`
+      : `\n\nAdditional instructions: ${additionalInstructions}`
   }
 
   return prompt
