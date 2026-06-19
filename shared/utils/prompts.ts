@@ -45,7 +45,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "title": "剧本标题",
   "premise": "核心设定（100-200字）",
   "characters": [
-    { "name": "角色名", "age": 28, "personality": "性格描述", "background": "背景故事", "role": "主角/配角/反派" }
+    { "name": "角色名", "age": "28", "personality": "性格描述", "background": "背景故事", "role": "主角/配角/反派" }
   ],
   "episodes": [
     {
@@ -64,7 +64,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "premise": "核心设定（100-200字）",
   "characters": [
     {
-      "name": "角色名", "age": 28,
+      "name": "角色名", "age": "28",
       "personality": "详细性格描述",
       "background": "完整的背景故事",
       "role": "主角/配角/反派",
@@ -84,7 +84,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "premise": "核心设定（100-200字，包含世界观、故事背景和核心冲突）",
   "characters": [
     {
-      "name": "角色名", "age": 28,
+      "name": "角色名", "age": "28",
       "personality": "性格描述",
       "background": "背景故事",
       "role": "主角/配角/反派",
@@ -134,7 +134,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "title": "Script title",
   "premise": "Core premise (100-200 words)",
   "characters": [
-    { "name": "Character name", "age": 28, "personality": "Description", "background": "Background", "role": "protagonist/supporting/antagonist" }
+    { "name": "Character name", "age": "28", "personality": "Description", "background": "Background", "role": "protagonist/supporting/antagonist" }
   ],
   "episodes": [
     {
@@ -153,7 +153,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "premise": "Core premise (100-200 words)",
   "characters": [
     {
-      "name": "Character name", "age": 28,
+      "name": "Character name", "age": "28",
       "personality": "Detailed personality",
       "background": "Complete backstory",
       "role": "protagonist/supporting/antagonist",
@@ -173,7 +173,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "premise": "Core premise (100-200 words)",
   "characters": [
     {
-      "name": "Character name", "age": 28,
+      "name": "Character name", "age": "28",
       "personality": "Description",
       "background": "Background story",
       "role": "protagonist/supporting/antagonist",
