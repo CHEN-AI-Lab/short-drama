@@ -123,13 +123,13 @@ export async function POST(request: Request) {
             let repaired = candidate
               .replace(/,\s*}/g, '}')
               .replace(/,\s*]/g, ']')
-              // Quote all unquoted values after : that aren't numbers/true/false/null/objects/arrays
-              .replace(/:\s*([^"{\[0-9tfn][^,}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
-              // Also quote values that start with a digit but contain non-digit chars (like "30岁")
-              .replace(/:\s*"?(\.?\d+[^"0-9,}\]]+)"?(\s*[,}\]])/g, ': "$1"$2')
-              // Handle the case where "age": has a bare string value
-              .replace(/"age"\s*:\s*([^"{\[0-9tfn][^,}\]]*)/g, '"age": "$1"')
-            try {
+              // Quote ALL unquoted values after : (Chinese characters, unquoted words, etc.)
+              .replace(/:\s*([A-Za-z\u4e00-\u9fff_][^,}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
+              // Also fix unquoted values with digits mixed in (like "30岁" or "未知1")
+              .replace(/:\s*([^"{\[0-9tfn\-][^,}\]]*?)([,}\]])/g, ': "$1"$2')
+              // Final pass: catch any remaining :value patterns without quotes
+              .replace(/:\s+([^"{\[0-9tfn\-][^,\]}]*)([,}\]])/g, ': "$1"$2')
+              try {
               generationResponse = JSON.parse(repaired)
               break
             } catch { continue }
