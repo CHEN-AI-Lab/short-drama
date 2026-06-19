@@ -119,17 +119,20 @@ export async function POST(request: Request) {
             generationResponse = JSON.parse(candidate)
             break
           } catch {
-            // Try to repair
-            let repaired = candidate
+            // Try to repair — handle AI's irregular JSON output
+                        let repaired = candidate
+                          // 1. Remove trailing commas
                           .replace(/,\s*}/g, '}')
                           .replace(/,\s*]/g, ']')
-                          // Quote values starting with Chinese/letters (like 未知, 外表18)
-                          .replace(/:\s*([A-Za-z\u4e00-\u9fff_][^,}\]]*?)(\s*[,}\]])/g, ': "$1"$2')
-                          // Quote values starting with digits but containing non-digit chars (like 500+, 30岁)
-                          .replace(/:\s*(\d+[^"0-9,}\]]+?)(\s*[,}\]])/g, ': "$1"$2')
-                          // Catch any remaining unquoted values
-                          .replace(/:\s+([^"{\[0-9tfn\-][^,\]}]*)([,}\]])/g, ': "$1"$2')
-            try {
+                          // 2. Remove stray quotes inside bare values: `外表25"` → `外表25`
+                          .replace(/:\s*([^"{\[0-9tfn\-][^,}\]]*?)"\s*([,}\]])/g, ': $1$2')
+                          // 3. Quote Chinese/letter-starting values: `: 未知,` → `: "未知",`
+                          .replace(/:\s*([A-Za-z\u4e00-\u9fff_][^,}\]]*?)\s*([,}\]])/g, ': "$1"$2')
+                          // 4. Quote digit-starting mixed values: `: 500+,` → `: "500+",`, `: 120（外表18）,` → `: "120（外表18）",`
+                          .replace(/:\s*(\d+[^"0-9,}\]]+?)\s*([,}\]])/g, ': "$1"$2')
+                          // 5. Catch anything else unquoted
+                          .replace(/:\s+([^"{\[0-9tfn\-][^,\]}]*)\s*([,}\]])/g, ': "$1"$2')
+                        try {
               generationResponse = JSON.parse(repaired)
               break
             } catch { continue }
