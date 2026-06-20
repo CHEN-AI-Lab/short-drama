@@ -181,7 +181,8 @@ export default function DramaGenerator() {
           ...parseResult.data,
           startEpisode: startEp,
           episodeCount: epInBatch,
-          autoEpisodeCount, // pass through the original flag so prompt includes storyComplete signal
+          autoEpisodeCount,
+          characters: merged.characters.map((c) => c.name),
         }
 
         const res = await generateDrama(req as any)

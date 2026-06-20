@@ -11,10 +11,11 @@ export interface BuildGenerationPromptParams {
   generationType: string
   startEpisode?: number
   existingSummary?: string
+  existingCharacters?: string[]
 }
 
 export function buildGenerationPrompt(params: BuildGenerationPromptParams): string {
-  const { genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary } = params
+  const { genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary, existingCharacters } = params
   const isChinese = locale === 'zh-CN'
   const genreList = genres.join(', ')
 
@@ -257,8 +258,11 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   const td = typedesc[generationType] || typedesc.full_script
 
   if (isChinese) {
+    const existingNames = existingCharacters?.length
+      ? `\n已有角色：${existingCharacters.join('、')}。后续剧情**只能用以上角色**，不要创造新角色。`
+      : ''
     const batchHeader = startEpisode
-      ? `\n## 分批生成说明\n这是第 ${startEpisode} 集起后续部分的生成请求。之前已生成：${existingSummary || '剧情已展开'}。请继续推进剧情，保持人物连贯性。`
+      ? `\n## 分批生成说明\n这是第 ${startEpisode} 集起后续部分的生成请求。之前已生成：${existingSummary || '剧情已展开'}。${existingNames}\n请继续推进剧情，保持已有角色的性格和行为一致。`
       : ''
 
     const autoSignal = autoEpisodeCount
@@ -288,8 +292,11 @@ ${jsonStructure}
 确保输出是有效 JSON，不要包含额外说明文字。`
   }
 
+  const existingNamesEn = existingCharacters?.length
+    ? `\nExisting characters: ${existingCharacters.join(', ')}. **Only use these characters** — do NOT create new ones.`
+    : ''
   const batchHeaderEn = startEpisode
-    ? `\n\n## Batch Generation\nThis is a continuation request starting from episode ${startEpisode}. Previously generated: ${existingSummary || 'the story has started'}. Continue the plot naturally, keeping characters consistent.`
+    ? `\n\n## Batch Generation\nThis is a continuation request starting from episode ${startEpisode}. Previously generated: ${existingSummary || 'the story has started'}.${existingNamesEn}\nContinue the plot naturally, keeping character personalities and behaviors consistent.`
     : ''
 
   const autoSignalEn = autoEpisodeCount

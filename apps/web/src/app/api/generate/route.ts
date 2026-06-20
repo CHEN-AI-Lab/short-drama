@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     }
 
     // ── Build prompts ──
-    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary: '剧情已展开' })
+    const systemPrompt = buildGenerationPrompt({ genres, episodeCount, locale, autoEpisodeCount, generationType, startEpisode, existingSummary: '剧情已展开', existingCharacters: body.characters })
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, locale, additionalInstructions })
 
     // ── Call AI API with provider fallback ──
