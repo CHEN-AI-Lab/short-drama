@@ -197,9 +197,10 @@ export default function DramaGenerator() {
         if (!merged.title) merged.title = res.title
         if (!merged.premise) merged.premise = res.premise
 
-        // Merge characters (deduplicate by name)
+        // Merge characters (deduplicate by name, max 6)
+        const MAX_CHARS = 6
         for (const ch of res.characters || []) {
-          if (!seenCharNames.has(ch.name)) {
+          if (!seenCharNames.has(ch.name) && merged.characters.length < MAX_CHARS) {
             seenCharNames.add(ch.name)
             merged.characters.push(ch)
           }
@@ -211,9 +212,9 @@ export default function DramaGenerator() {
           merged.episodes.push({ ...ep, episode: ep.episode + epOffset })
         }
 
-        // Merge arcs (deduplicate by character name)
+        // Merge arcs (deduplicate by character name, max 6)
         for (const arc of res.characterArcs || []) {
-          if (arc.character?.name && !seenArcChars.has(arc.character.name)) {
+          if (arc.character?.name && !seenArcChars.has(arc.character.name) && merged.characterArcs.length < MAX_CHARS) {
             seenArcChars.add(arc.character.name)
             merged.characterArcs.push(arc)
           }
