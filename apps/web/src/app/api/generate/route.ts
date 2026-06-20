@@ -299,19 +299,32 @@ export async function POST(request: Request) {
         episode: ep.episode || ep.episodeNumber || i + 1,
         title: ep.title || '',
         synopsis: ep.synopsis || ep.summary || '',
-        scenes: (ep.scenes || []).map((s: any) => ({
-          title: s.title || '',
-          location: s.location || '',
-          characters: (s.characters || []).map((ch: any) =>
-            typeof ch === 'string' ? { name: ch, emotion: '' } : { name: ch.name || '', emotion: ch.emotion || '' }
-          ),
-          description: s.description || '',
-          keyDialogue: Array.isArray(s.keyDialogue) ? s.keyDialogue : 
-                Array.isArray(s.dialogue) ? s.dialogue : 
-                typeof s.keyDialogue === 'string' ? [s.keyDialogue] :
-                typeof s.dialogue === 'string' ? [s.dialogue] : [],
-          duration: s.duration || '',
-        })),
+        scenes: (ep.scenes || []).map((s: any) => {
+          // Calculate reasonable duration based on content
+          const descLen = (s.description || '').length
+          const dialogues = Array.isArray(s.keyDialogue) ? s.keyDialogue :
+            Array.isArray(s.dialogue) ? s.dialogue :
+            typeof s.keyDialogue === 'string' ? [s.keyDialogue] :
+            typeof s.dialogue === 'string' ? [s.dialogue] : []
+          const dialogueLines = dialogues.length
+          const totalChars = dialogues.reduce((sum: number, d: string) => sum + d.length, 0) + descLen
+          // ~4 chars per second of speech, ~30 chars = 10s baseline, +2s per dialogue line
+          const seconds = Math.max(20, Math.round(descLen * 0.3 + dialogueLines * 8 + totalChars * 0.15))
+          const calculatedDuration = seconds >= 60
+            ? `${Math.floor(seconds / 60)}min${seconds % 60 > 30 ? '30' : ''}`
+            : `${seconds}s`
+
+          return {
+            title: s.title || '',
+            location: s.location || '',
+            characters: (s.characters || []).map((ch: any) =>
+              typeof ch === 'string' ? { name: ch, emotion: '' } : { name: ch.name || '', emotion: ch.emotion || '' }
+            ),
+            description: s.description || '',
+            keyDialogue: dialogues,
+            duration: calculatedDuration,
+          }
+        }),
         hook: ep.hook || '',
       }))
 
