@@ -595,6 +595,10 @@ export default function DramaGenerator() {
                     {result.episodes.length}
                   </span>
                   <span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '角色' : 'Characters'}:</span>{' '}
+                    {result.characters.length}
+                  </span>
+                  <span>
                     <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '类型' : 'Type'}:</span>{' '}
                     {gtt(generationType)}
                   </span>
