@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocale } from '../hooks/useLocale.tsx'
+import { useLocale } from '../contexts/useLocale.tsx'
 import type { Locale } from 'shared'
 
 type Theme = 'light' | 'dark'

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useLocale } from '../hooks/useLocale.tsx'
+import { useLocale } from '../contexts/useLocale.tsx'
 import { NavLink } from 'react-router-dom'
 import type { Locale } from 'shared'
 

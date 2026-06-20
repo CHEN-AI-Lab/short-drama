@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import type { HistoryItem } from 'shared'
-import { useLocale } from '../hooks/useLocale.tsx'
+import { useLocale } from '../contexts/useLocale.tsx'
 import GenrePill from '../components/GenrePill'
 import CharacterCard from '../components/CharacterCard'
 import EpisodeCard from '../components/EpisodeCard'

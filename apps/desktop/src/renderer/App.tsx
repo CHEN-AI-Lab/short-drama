@@ -4,7 +4,7 @@ import NavBar from './components/NavBar'
 import HomePage from './pages/HomePage'
 import HistoryPage from './pages/HistoryPage'
 import SettingsPage from './pages/SettingsPage'
-import { LocaleProvider } from './hooks/useLocale.tsx'
+import { LocaleProvider } from '../contexts/useLocale.tsx'
 
 export default function App() {
   return (

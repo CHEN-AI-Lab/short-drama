@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# .husky/pre-commit — 提交前检查多端结构
+echo "=== pre-commit: 多端结构合规检查 ==="
+bash scripts/check-structure.sh
+if [ $? -ne 0 ]; then
+  echo "❌ 结构违规，提交被阻止"
+  exit 1
+fi
+echo "✅ 结构检查通过"
