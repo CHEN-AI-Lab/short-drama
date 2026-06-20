@@ -595,10 +595,6 @@ export default function DramaGenerator() {
                     {result.episodes.length}
                   </span>
                   <span>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '角色' : 'Characters'}:</span>{' '}
-                    {result.characters.length}
-                  </span>
-                  <span>
                     <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '类型' : 'Type'}:</span>{' '}
                     {gtt(generationType)}
                   </span>
@@ -615,8 +611,8 @@ export default function DramaGenerator() {
           <div className="flex border-b border-gray-200 dark:border-gray-700">
             {(
               [
-                { key: 'characters', label: ot('characters') },
-                { key: 'episodes', label: ot('episodes') },
+                { key: 'characters', label: ot('characters') + ` (${result.characters.length})` },
+                { key: 'episodes', label: ot('episodes') + ` (${result.episodes.length})` },
                 { key: 'characterArcs', label: ot('characterArcs') },
               ] as { key: ResultTab; label: string }[]
             ).map((tab) => (
