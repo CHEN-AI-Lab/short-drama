@@ -591,6 +591,9 @@ export default function DramaGenerator() {
                       {getGenreIcon(g)} {getGenreLabel(g)}
                     </span>
                   ))}
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                    {gtt(generationType)}
+                  </span>
                 </div>
               </div>
 
