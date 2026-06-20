@@ -144,12 +144,10 @@ export default function HistoryPage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                     {item.premise}
                   </p>
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 dark:text-gray-500">
-                    <span>{item.episodeCount} {locale === 'zh-CN' ? '集' : 'eps'}</span>
-                    <span>·</span>
-                    <span>{new Date(item.timestamp).toLocaleDateString(locale === 'zh-CN' ? 'zh-CN' : 'en-US')}</span>
-                    <span>·</span>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs text-gray-400 dark:text-gray-500">
                     <span className="text-indigo-500">{item.genres.length} {locale === 'zh-CN' ? '题材' : 'genres'}</span>
+                    <span>·</span>
+                    <span>{item.episodeCount} {locale === 'zh-CN' ? '集' : 'eps'}</span>
                     {item.generationType && (
                       <>
                         <span>·</span>
@@ -164,6 +162,7 @@ export default function HistoryPage() {
                         <span>{item.result.characters.length} {locale === 'zh-CN' ? '角色' : 'chars'}</span>
                       </>
                     )}
+                    <span className="ml-auto">{new Date(item.timestamp).toLocaleDateString(locale === 'zh-CN' ? 'zh-CN' : 'en-US')}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {item.genres.map((g) => (
