@@ -1,0 +1,41 @@
+<template>
+  <div class="settings">
+    <text class="header">{{ t('settings') }}</text>
+    <div class="row" onclick="toggleLang">
+      <text>语言 / Language</text>
+      <text class="value">{{ locale }}</text>
+    </div>
+    <div class="row" onclick="goToPricing">
+      <text>Pro 会员</text>
+      <text class="value arrow">></text>
+    </div>
+  </div>
+</template>
+
+<style>
+.settings { padding: 16px; flex-direction: column; }
+.header { font-size: 20px; font-weight: bold; margin-bottom: 16px; }
+.row {
+  padding: 14px; border-radius: 10px;
+  background-color: #1e293b; border: 1px solid #334155;
+  flex-direction: row; justify-content: space-between; margin-bottom: 8px;
+  font-size: 14px;
+}
+.value { color: #94a3b8; }
+.arrow { color: #6366f1; }
+</style>
+
+<script>
+import { t, getLocale } from '../i18n'
+
+export default {
+  data: { locale: 'zh-CN' },
+  onInit() { this.locale = getLocale() },
+  toggleLang() {
+    // QuickApp language switching handled at system level
+  },
+  goToPricing() {
+    router.push({ uri: '/pages/Pricing' })
+  },
+}
+</script>

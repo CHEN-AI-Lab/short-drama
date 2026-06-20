@@ -1,0 +1,11 @@
+{
+  "name": "short-drama-quickapp",
+  "version": "1.0.0",
+  "description": "Short Drama - 快应用",
+  "main": "src/app.ux",
+  "scripts": {
+    "dev": "hap run",
+    "build": "hap build --release",
+    "release": "hap build --release"
+  }
+}

@@ -1,0 +1,60 @@
+<template>
+  <div class="page">
+    <text class="header">{{ t('history') }}</text>
+    <div if="{{ items.length === 0 }}" class="empty">
+      <text>暂无历史记录</text>
+    </div>
+    <list class="list" if="{{ items.length > 0 }}">
+      <list-item for="item in items" class="card" onclick="viewItem(item.id)">
+        <text class="card-title">{{ item.title || '未命名剧本' }}</text>
+        <text class="card-meta">{{ item.episodeCount }} 集 · {{ new Date(item.timestamp).toLocaleDateString() }}</text>
+      </list-item>
+    </list>
+  </div>
+</template>
+
+<style>
+.page { padding: 16px; flex-direction: column; }
+.header { font-size: 20px; font-weight: bold; margin-bottom: 16px; }
+.empty { text-align: center; padding: 40px; color: #64748b; }
+.list { flex-direction: column; gap: 8px; }
+.card {
+  padding: 14px; border-radius: 10px;
+  background-color: #1e293b; border: 1px solid #334155;
+  flex-direction: column; gap: 4px;
+}
+.card-title { font-size: 15px; font-weight: 600; }
+.card-meta { font-size: 12px; color: #94a3b8; }
+</style>
+
+<script>
+import { t, getLocale } from '../../i18n'
+import router from '@system.router'
+
+export default {
+  data: {
+    items: [],
+    locale: 'zh-CN',
+  },
+  onInit() {
+    this.locale = getLocale()
+    this.loadHistory()
+  },
+  loadHistory() {
+    try {
+      const storage = require('@system.storage')
+      storage.get({
+        key: 'short_drama_history',
+        success: (res) => {
+          if (res.data) this.items = JSON.parse(res.data)
+        },
+      })
+    } catch (e) {
+      this.items = []
+    }
+  },
+  viewItem(id) {
+    router.push({ uri: '/pages/Result', params: { id } })
+  },
+}
+</script>

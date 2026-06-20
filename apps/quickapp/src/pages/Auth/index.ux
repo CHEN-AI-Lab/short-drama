@@ -1,0 +1,76 @@
+<template>
+  <div class="auth">
+    <text class="title">{{ isLogin ? t('login') : t('register') }}</text>
+
+    <input class="input" type="email" placeholder="邮箱" value="{{ email }}" onchange="setEmail" />
+    <input class="input" type="password" placeholder="密码" value="{{ password }}" onchange="setPassword" />
+
+    <button class="submit-btn" onclick="handleSubmit" disabled="{{ loading }}">
+      <text>{{ loading ? '处理中...' : (isLogin ? t('login') : t('register')) }}</text>
+    </button>
+
+    <text class="toggle" onclick="toggleMode">
+      {{ isLogin ? '没有账号？注册' : '已有账号？登录' }}
+    </text>
+
+    <text if="{{ error }}" class="error">{{ error }}</text>
+  </div>
+</template>
+
+<style>
+.auth { padding: 24px; flex-direction: column; align-items: center; }
+.title { font-size: 22px; font-weight: bold; margin-bottom: 24px; }
+.input {
+  width: 100%; padding: 12px; margin-bottom: 12px;
+  border-radius: 8px; border: 1px solid #334155;
+  background-color: #1e293b; color: #e2e8f0; font-size: 14px;
+}
+.submit-btn {
+  width: 100%; padding: 12px; margin-top: 8px;
+  border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white; font-size: 16px; font-weight: 600; text-align: center;
+}
+.submit-btn[disabled] { opacity: 0.5; }
+.toggle { margin-top: 16px; color: #6366f1; font-size: 13px; }
+.error { color: #ef4444; margin-top: 12px; font-size: 13px; }
+</style>
+
+<script>
+import { t, getLocale } from '../../i18n'
+import { signIn, signUp } from '../../api'
+import router from '@system.router'
+
+export default {
+  data: {
+    isLogin: true,
+    email: '',
+    password: '',
+    loading: false,
+    error: '',
+    locale: 'zh-CN',
+  },
+  onInit() {
+    this.locale = getLocale()
+  },
+  setEmail(e) { this.email = e.value },
+  setPassword(e) { this.password = e.value },
+  toggleMode() { this.isLogin = !this.isLogin; this.error = '' },
+  async handleSubmit() {
+    if (!this.email || !this.password) return
+    this.loading = true
+    this.error = ''
+    try {
+      const fn = this.isLogin ? signIn : signUp
+      const res = await fn(this.email, this.password)
+      if (res.error) {
+        this.error = res.error
+      } else {
+        router.replace({ uri: '/pages/Home' })
+      }
+    } catch (e) {
+      this.error = '网络错误'
+    }
+    this.loading = false
+  },
+}
+</script>

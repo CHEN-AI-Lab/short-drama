@@ -1,0 +1,135 @@
+<template>
+  <div class="home">
+    <text class="title">{{ t('title') }}</text>
+    <text class="subtitle">输入题材，AI 自动生成短剧剧本</text>
+
+    <div class="genre-section">
+      <text class="section-title">{{ t('genres') }}</text>
+      <div class="genre-list">
+        <div for="(i, genre) in genres"
+             class="genre-pill {{ selected.includes(genre.key) ? 'active' : '' }}"
+             onclick="toggleGenre(genre.key)">
+          <text>{{ genre.icon }} {{ label(genre) }}</text>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <input class="episode-input" type="number" value="{{ episodeCount }}" onchange="setEpisodeCount" />
+      <button class="generate-btn {{ loading ? 'loading' : '' }}" onclick="handleGenerate" disabled="{{ !selected.length }}">
+        <text>{{ loading ? '生成中...' : t('generate') }}</text>
+      </button>
+    </div>
+
+    <div if="{{ error }}" class="error">
+      <text>{{ error }}</text>
+    </div>
+
+    <div if="{{ result }}" class="result">
+      <text class="result-title">{{ result.title }}</text>
+      <text class="result-premise">{{ result.premise }}</text>
+    </div>
+  </div>
+</template>
+
+<style>
+.home { padding: 16px; flex-direction: column; }
+.title { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
+.subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
+.section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.genre-section { margin-bottom: 24px; }
+.genre-list { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.genre-pill {
+  padding: 6px 14px; border-radius: 20px;
+  border: 1px solid #334155; margin: 4px;
+  background-color: #1e293b; font-size: 13px;
+}
+.genre-pill.active { background-color: #6366f1; border-color: #6366f1; }
+.actions { flex-direction: column; gap: 12px; }
+.episode-input {
+  padding: 10px; border-radius: 8px;
+  border: 1px solid #334155; background-color: #1e293b;
+  color: #e2e8f0; font-size: 14px;
+}
+.generate-btn {
+  padding: 12px; border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: white; font-size: 16px; font-weight: 600;
+  text-align: center;
+}
+.generate-btn.loading { opacity: 0.6; }
+.generate-btn[disabled] { opacity: 0.4; }
+.error { color: #ef4444; margin-top: 16px; }
+.result { margin-top: 24px; }
+.result-title { font-size: 18px; font-weight: bold; }
+.result-premise { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+</style>
+
+<script>
+import { t, getLocale } from '../i18n'
+import { generateDrama } from '../api'
+
+const GENRES = [
+  { key: 'ceo', icon: '👔', zh: '霸总', en: 'CEO Romance' },
+  { key: 'time_travel', icon: '⏳', zh: '穿越', en: 'Time Travel' },
+  { key: 'sweet_romance', icon: '💕', zh: '甜宠', en: 'Sweet Romance' },
+  { key: 'xianxia', icon: '⚔️', zh: '仙侠', en: 'Xianxia' },
+  { key: 'suspense', icon: '🔍', zh: '悬疑', en: 'Suspense' },
+  { key: 'urban', icon: '🏙️', zh: '都市', en: 'Urban' },
+  { key: 'fantasy', icon: '✨', zh: '玄幻', en: 'Fantasy' },
+  { key: 'rebirth', icon: '🔄', zh: '重生', en: 'Rebirth' },
+  { key: 'school', icon: '🎒', zh: '校园', en: 'School' },
+  { key: 'ancient', icon: '👘', zh: '古装', en: 'Ancient' },
+]
+
+export default {
+  data: {
+    genres: GENRES,
+    selected: [],
+    episodeCount: 10,
+    loading: false,
+    error: '',
+    result: null,
+    locale: 'zh-CN',
+  },
+  onInit() {
+    this.locale = getLocale()
+  },
+  label(genre) {
+    return this.locale === 'zh-CN' ? genre.zh : genre.en
+  },
+  toggleGenre(key) {
+    const idx = this.selected.indexOf(key)
+    if (idx > -1) {
+      this.selected.splice(idx, 1)
+    } else if (this.selected.length < 3) {
+      this.selected.push(key)
+    }
+  },
+  setEpisodeCount(e) {
+    this.episodeCount = parseInt(e.value) || 10
+  },
+  async handleGenerate() {
+    if (!this.selected.length) return
+    this.loading = true
+    this.error = ''
+    this.result = null
+    try {
+      const res = await generateDrama({
+        genres: this.selected,
+        episodeCount: this.episodeCount,
+        generationType: 'full_script',
+        locale: this.locale,
+      })
+      if (res.error) {
+        this.error = res.error
+      } else {
+        this.result = res
+      }
+    } catch (e) {
+      this.error = '网络错误，请稍后重试'
+    }
+    this.loading = false
+  },
+}
+</script>

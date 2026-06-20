@@ -1,0 +1,46 @@
+{
+  "package": "com.shortdrama.app",
+  "name": "短剧工坊",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "icon": "/assets/icon.png",
+  "minPlatformVersion": 1080,
+  "config": {
+    "auth": {
+      "oauth": ["google"]
+    }
+  },
+  "permissions": [
+    { "name": "network" },
+    { "name": "storage" }
+  ],
+  "router": {
+    "entry": "pages/Home",
+    "pages": {
+      "pages/Home": {
+        "component": "index"
+      },
+      "pages/History": {
+        "component": "index"
+      },
+      "pages/Auth": {
+        "component": "index"
+      },
+      "pages/Settings": {
+        "component": "index"
+      },
+      "pages/Result": {
+        "component": "index"
+      }
+    }
+  },
+  "display": {
+    "titleBar": true,
+    "title": "短剧工坊",
+    "theme": {
+      "backgroundColor": "#0f172a",
+      "textColor": "#e2e8f0",
+      "titleBarColor": "#0f172a"
+    }
+  }
+}

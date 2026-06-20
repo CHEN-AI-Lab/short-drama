@@ -1,0 +1,25 @@
+<template>
+  <div class="app">
+    <router-view />
+  </div>
+</template>
+
+<style>
+.app {
+  width: 100%;
+  height: 100%;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  font-size: 14px;
+}
+</style>
+
+<script>
+import router from '@system.router'
+
+export default {
+  onCreate() {
+    console.info('Short Drama QuickApp launched')
+  }
+}
+</script>
