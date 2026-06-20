@@ -198,8 +198,8 @@ export default function DramaGenerator() {
         if (!merged.title) merged.title = res.title
         if (!merged.premise) merged.premise = res.premise
 
-        // Merge characters (deduplicate by name, max 6)
-        const MAX_CHARS = 6
+        // Merge characters (deduplicate by name, max 10)
+        const MAX_CHARS = 10
         for (const ch of res.characters || []) {
           if (!seenCharNames.has(ch.name) && merged.characters.length < MAX_CHARS) {
             seenCharNames.add(ch.name)

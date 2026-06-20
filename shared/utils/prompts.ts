@@ -25,8 +25,8 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
       ? `严格生成 ${episodeCount} 集${startEpisode ? '（从第 ' + startEpisode + ' 集开始）' : ''}`
       : `${episodeCount} episodes${startEpisode ? ' (starting from ep ' + startEpisode + ')' : ''}`)
 
-  // ── Character cap (generous, AI decides exact count within this) ──
-  const MAX_CHARS = 6
+  // ── Character cap ──
+  const MAX_CHARS = 10
 
   // ── Per-type JSON structures ──
   const zhStructure: Record<string, string> = {
@@ -259,7 +259,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
 
   if (isChinese) {
     const existingNames = existingCharacters?.length
-      ? `\n已有角色：${existingCharacters.join('、')}。后续剧情**只能用以上角色**，不要创造新角色。`
+      ? `\n已有角色：${existingCharacters.join('、')}。后续剧情**优先使用以上角色**，如剧情需要可以新增（每集新增不超过 1 人）。`
       : ''
     const batchHeader = startEpisode
       ? `\n## 分批生成说明\n这是第 ${startEpisode} 集起后续部分的生成请求。之前已生成：${existingSummary || '剧情已展开'}。${existingNames}\n请继续推进剧情，保持已有角色的性格和行为一致。`
@@ -282,7 +282,7 @@ ${jsonStructure}
 ## ⚠️ 硬性要求（必须遵守）
 1. 题材：${genreList}
 2. 集数：${epCountStr}
-3. **角色数量上限 ${MAX_CHARS} 人**（主角 1-2 人、反派 0-1 人），在此范围内根据剧情自由决定。
+3. **角色数量上限 ${MAX_CHARS} 人**（主角 1-2 人、反派 0-1 人），在此范围内根据剧情自由决定。已有角色优先复用，新角色需剧情支撑。
 4. **每集总时长 1-5 分钟**，场景时长对应内容量——几句对白的场景 30 秒，多场景的加长到 2 分钟。内容少的集时长自然短。
 5. 剧情有悬念和反转，节奏紧凑
 6. 角色性格鲜明
@@ -293,7 +293,7 @@ ${jsonStructure}
   }
 
   const existingNamesEn = existingCharacters?.length
-    ? `\nExisting characters: ${existingCharacters.join(', ')}. **Only use these characters** — do NOT create new ones.`
+    ? `\nExisting characters: ${existingCharacters.join(', ')}. **Prioritize these characters** — only add new ones when the story requires it (max 1 new character per batch).`
     : ''
   const batchHeaderEn = startEpisode
     ? `\n\n## Batch Generation\nThis is a continuation request starting from episode ${startEpisode}. Previously generated: ${existingSummary || 'the story has started'}.${existingNamesEn}\nContinue the plot naturally, keeping character personalities and behaviors consistent.`
