@@ -585,20 +585,6 @@ export default function DramaGenerator() {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {result.title}
                 </h2>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  <span>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '题材' : 'Genres'}:</span>{' '}
-                    {selectedGenres.map((g) => getGenreLabel(g)).join(' · ')}
-                  </span>
-                  <span>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '集数' : 'Episodes'}:</span>{' '}
-                    {result.episodes.length}
-                  </span>
-                  <span>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{locale === 'zh-CN' ? '类型' : 'Type'}:</span>{' '}
-                    {gtt(generationType)}
-                  </span>
-                </div>
               </div>
 
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
