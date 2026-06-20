@@ -7,7 +7,7 @@ export const dramaGenreSchema = z.enum([
 ])
 
 export const generationTypeSchema = z.enum(['outline', 'scene', 'character', 'full_script'])
-export const episodeCountSchema = z.number().int().min(1, '至少1集').max(200, '最多200集').default(10)
+export const episodeCountSchema = z.number().int().min(0, '至少1集').max(200, '最多200集').default(10)
 export const localeSchema = z.enum(['zh-CN', 'en'])
 
 export const generationRequestSchema = z.object({
