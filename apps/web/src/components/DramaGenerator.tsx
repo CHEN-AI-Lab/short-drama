@@ -585,6 +585,13 @@ export default function DramaGenerator() {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {result.title}
                 </h2>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {selectedGenres.map((g) => (
+                    <span key={g} className="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                      {getGenreIcon(g)} {getGenreLabel(g)}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
