@@ -145,8 +145,6 @@ export default function HistoryPage() {
                     {item.premise}
                   </p>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs text-gray-400 dark:text-gray-500">
-                    <span className="text-indigo-500">{item.genres.length} {locale === 'zh-CN' ? '题材' : 'genres'}</span>
-                    <span>·</span>
                     <span>{item.episodeCount} {locale === 'zh-CN' ? '集' : 'eps'}</span>
                     {item.generationType && (
                       <>
