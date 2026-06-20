@@ -92,12 +92,12 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
 }`,
     full_script: `{
   "title": "剧本标题",
-  "premise": "核心设定（100-200字，包含世界观、故事背景和核心冲突）",
+  "premise": "核心设定（200-300字，包含世界观、故事背景和核心冲突）",
   "characters": [
     {
       "name": "角色名", "age": "28",
-      "personality": "性格描述",
-      "background": "背景故事",
+      "personality": "性格描述（20-50字）",
+      "background": "背景故事（50-100字）",
       "role": "主角/配角/反派",
       "relationship": "与其他角色的关系"
     }
@@ -111,10 +111,12 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
       "scenes": [
         {
           "location": "场景地点",
-          "description": "场景描述",
+          "description": "场景描述（150-300字，含角色动作、表情、环境细节）",
           "duration": "约30秒-2分钟",
           "characters": ["角色名"],
-          "dialogue": "完整对话内容"
+          "dialogue": "角色名：对白内容
+角色名：对白内容
+（每场景至少3-5轮对白，每句对白需体现角色性格）"
         }
       ]
     }
@@ -195,12 +197,12 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
 }`,
     full_script: `{
   "title": "Script title",
-  "premise": "Core premise (100-200 words)",
+  "premise": "Core premise (200-300 words, includes world-building and central conflict)",
   "characters": [
     {
       "name": "Character name", "age": "28",
-      "personality": "Description",
-      "background": "Background story",
+      "personality": "Detailed personality (20-50 words)",
+      "background": "Backstory (50-100 words)",
       "role": "protagonist/supporting/antagonist",
       "relationship": "Relationships"
     }
@@ -210,14 +212,16 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
       "episodeNumber": 1,
       "title": "Episode 1 title",
       "hook": "Cliffhanger",
-      "summary": "Plot summary",
+      "summary": "Plot summary (100-200 words)",
       "scenes": [
         {
           "location": "Location",
-          "description": "Scene description",
+          "description": "Scene description (150-300 words, includes character actions, expressions, environment details)",
           "duration": "30s-2min",
           "characters": ["Character names"],
-          "dialogue": "Full dialogue"
+          "dialogue": "CharacterName: dialogue line
+CharacterName: dialogue line
+(At least 3-5 exchanges per scene, each line must reflect character personality)"
         }
       ]
     }
@@ -283,9 +287,9 @@ ${jsonStructure}
 1. 题材：${genreList}
 2. 集数：${epCountStr}
 3. **角色数量上限 ${MAX_CHARS} 人**（主角 1-2 人、反派 0-1 人），在此范围内根据剧情自由决定。已有角色优先复用，新角色需剧情支撑。
-4. **每集总时长 1-5 分钟**，场景时长对应内容量——几句对白的场景 30 秒，多场景的加长到 2 分钟。内容少的集时长自然短。
+4. **场景必须详细**：每场景描述 150-300 字（含动作、表情、环境），对白至少 3-5 轮，体现角色性格和冲突。禁止敷衍的简略描述。
 5. 剧情有悬念和反转，节奏紧凑
-6. 角色性格鲜明
+6. 角色性格鲜明，行为一致
 7. 每集结尾有悬念钩子
 8. 全部中文输出
 
@@ -317,9 +321,9 @@ ${jsonStructure}
 1. Genres: ${genreList}
 2. Episodes: ${epCountStr}
 3. **Up to ${MAX_CHARS} characters** (1-2 protagonists, 0-1 antagonist). AI decides the exact count within this range based on the story.
-4. **Each episode: 1-5min total**. Scene duration proportional to content — a few lines of dialogue = 30s, multi-scene episodes up to 2min per scene. Less content = shorter duration naturally.
+4. **Scenes must be detailed**: Each scene description 150-300 words (actions, expressions, environment). At least 3-5 dialogue exchanges per scene showing character personality and conflict. No敷衍 minimal descriptions.
 5. Plot must have suspense and twists
-6. Characters must have distinct personalities
+6. Characters must have distinct, consistent personalities
 7. Each episode ends with a cliffhanger
 8. Output in English
 
