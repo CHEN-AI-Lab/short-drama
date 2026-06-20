@@ -150,6 +150,20 @@ export default function HistoryPage() {
                     <span>{new Date(item.timestamp).toLocaleDateString(locale === 'zh-CN' ? 'zh-CN' : 'en-US')}</span>
                     <span>·</span>
                     <span className="text-indigo-500">{item.genres.length} {locale === 'zh-CN' ? '题材' : 'genres'}</span>
+                    {item.generationType && (
+                      <>
+                        <span>·</span>
+                        <span className="text-purple-500">{locale === 'zh-CN'
+                          ? ({ outline: '大纲', scene: '场景', character: '弧光', full_script: '剧本' } as Record<string, string>)[item.generationType] || item.generationType
+                          : item.generationType}</span>
+                      </>
+                    )}
+                    {item.result?.characters && (
+                      <>
+                        <span>·</span>
+                        <span>{item.result.characters.length} {locale === 'zh-CN' ? '角色' : 'chars'}</span>
+                      </>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {item.genres.map((g) => (

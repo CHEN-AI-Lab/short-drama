@@ -65,7 +65,7 @@ function Input({
     : type
 
   const toggleBtnClass = [
-    'absolute inset-y-0 right-0 flex items-center px-2',
+    'absolute inset-y-0 right-1 flex items-center px-2',
     'text-gray-400 hover:text-gray-600',
     'dark:hover:text-gray-300',
     'focus:outline-none',

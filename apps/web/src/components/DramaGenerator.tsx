@@ -240,6 +240,7 @@ export default function DramaGenerator() {
         title: merged.title,
         premise: merged.premise,
         episodeCount: merged.episodes.length,
+        generationType,
         locale,
         result: merged,
       })
