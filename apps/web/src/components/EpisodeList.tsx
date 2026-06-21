@@ -139,11 +139,29 @@ export default function EpisodeList({
                                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     💬 {locale === 'zh-CN' ? '对白' : 'Dialogue'}
                                   </span>
-                                  {scene.keyDialogue.map((line, di) => (
-                                    <p key={di} className="mt-1 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700">
-                                      {line}
-                                    </p>
-                                  ))}
+                                  <div className="mt-2 space-y-1.5">
+                                    {scene.keyDialogue.map((line, di) => {
+                                      // Split character name from dialogue text (format: "角色名：对白" or "角色名: 对白")
+                                      const sepIndex = Math.min(
+                                        line.indexOf('\uFF1A') >= 0 ? line.indexOf('\uFF1A') : Infinity,
+                                        line.indexOf(':') >= 0 ? line.indexOf(':') : Infinity,
+                                      )
+                                      const charName = sepIndex < Infinity ? line.slice(0, sepIndex).trim() : ''
+                                      const dialogueText = sepIndex < Infinity ? line.slice(sepIndex + 1).trim() : line
+                                      return (
+                                        <div key={di} className="flex items-start gap-1 text-sm bg-white dark:bg-gray-800 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700">
+                                          {charName && (
+                                            <span className="font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap shrink-0">
+                                              {charName}：
+                                            </span>
+                                          )}
+                                          <span className="text-gray-700 dark:text-gray-300">
+                                            {dialogueText}
+                                          </span>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
                                 </div>
                               )}
                             </div>

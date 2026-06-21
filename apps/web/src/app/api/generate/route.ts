@@ -307,22 +307,42 @@ export async function POST(request: Request) {
           //   - Scene transition buffer: 2s
           //   - Minimum: 5s (quick reaction/reverse shot)
           //   - AI video platform limit: 15s per segment
-          const descLen = (s.description || '').length
-          const dialogues = Array.isArray(s.keyDialogue) ? s.keyDialogue :
+          // Parse dialogue lines — AI may return as string separated by \n
+          const rawDialogues = Array.isArray(s.keyDialogue) ? s.keyDialogue :
             Array.isArray(s.dialogue) ? s.dialogue :
-            typeof s.keyDialogue === 'string' ? [s.keyDialogue] :
-            typeof s.dialogue === 'string' ? [s.dialogue] : []
-          const dialogueLines = dialogues.length
-          const totalChars = dialogues.reduce((sum: number, d: string) => sum + d.length, 0)
-          const descTime = descLen / 8
-          const speechTime = totalChars / 4
-          const pauses = Math.max(0, dialogueLines - 1) * 1
-          const buffer = 2
-          const naturalSeconds = Math.round(descTime + speechTime + pauses + buffer)
-          const clampedSeconds = Math.max(5, naturalSeconds)
-          const segments = Math.ceil(clampedSeconds / 15)
+            typeof s.keyDialogue === 'string' ? s.keyDialogue.split('\n') :
+            typeof s.dialogue === 'string' ? s.dialogue.split('\n') : []
+          const dialogues = rawDialogues
+            .map((d: string) => d.trim())
+            .filter((d: string) => d.length > 0 && !d.startsWith('（') && !d.startsWith('('))
+
+          // AI video segmentation: group description + dialogue into ≤15s clips
+          // Each dialogue line is atomic (cannot be split mid-line)
+          const MAX_CLIP = 15
+          const descDuration = (s.description || '').length / 8 + 2  // description + buffer
+          const dialogueDurations = dialogues.map((d: string) => d.length / 4 + 1)  // speech + pause
+
+          // Build clips by accumulating units, cutting at dialogue boundaries
+          let segments = 1
+          if (dialogueDurations.length > 0) {
+            let running = descDuration
+            for (const dur of dialogueDurations) {
+              if (running + dur > MAX_CLIP) {
+                segments++
+                running = dur
+              } else {
+                running += dur
+              }
+            }
+          } else {
+            // No dialogue — single clip, capped at 15s
+            segments = 1
+          }
+
+          const totalSeconds = Math.max(5, Math.round(descDuration + dialogueDurations.reduce((a: number, b: number) => a + b, 0)))
+          const clampedSeconds = Math.min(totalSeconds, MAX_CLIP * segments)
           const calculatedDuration = segments > 1
-            ? `15s×${segments}`
+            ? `${clampedSeconds}s/${segments}段`
             : `${clampedSeconds}s`
 
           return {
