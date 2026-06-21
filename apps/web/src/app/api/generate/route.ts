@@ -300,19 +300,26 @@ export async function POST(request: Request) {
         title: ep.title || '',
         synopsis: ep.synopsis || ep.summary || '',
         scenes: (ep.scenes || []).map((s: any) => {
-          // Calculate reasonable duration based on content
+          // Calculate realistic scene duration for short dramas (竖屏短剧)
           const descLen = (s.description || '').length
           const dialogues = Array.isArray(s.keyDialogue) ? s.keyDialogue :
             Array.isArray(s.dialogue) ? s.dialogue :
             typeof s.keyDialogue === 'string' ? [s.keyDialogue] :
             typeof s.dialogue === 'string' ? [s.dialogue] : []
           const dialogueLines = dialogues.length
-          const totalChars = dialogues.reduce((sum: number, d: string) => sum + d.length, 0) + descLen
-          // ~4 chars per second of speech, ~30 chars = 10s baseline, +2s per dialogue line
-          const seconds = Math.max(20, Math.round(descLen * 0.3 + dialogueLines * 8 + totalChars * 0.15))
-          const calculatedDuration = seconds >= 60
-            ? `${Math.floor(seconds / 60)}min${seconds % 60 > 30 ? '30' : ''}`
-            : `${seconds}s`
+          const totalChars = dialogues.reduce((sum: number, d: string) => sum + d.length, 0)
+          // Realistic short-drama pacing:
+          //   - Description/narration: ~6 chars per second
+          //   - Dialogue: ~4 chars per second (Chinese speech rate)
+          //   - Pause between dialogue lines: ~2s
+          //   - Minimum scene: 15s (quick exchange), typical: 30-90s
+          const descTime = descLen / 6
+          const speechTime = totalChars / 4
+          const pauses = Math.max(0, dialogueLines - 1) * 2
+          const totalSeconds = Math.max(15, Math.round(descTime + speechTime + pauses))
+          const calculatedDuration = totalSeconds >= 60
+            ? `${Math.floor(totalSeconds / 60)}min${(totalSeconds % 60) ? (totalSeconds % 60) + 's' : ''}`
+            : `${totalSeconds}s`
 
           return {
             title: s.title || '',
