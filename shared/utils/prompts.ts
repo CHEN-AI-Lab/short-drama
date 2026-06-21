@@ -34,7 +34,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "title": "剧本标题",
   "premise": "核心设定（100-200字）",
   "characters": [
-    { "name": "角色名", "role": "主角/配角/反派" }
+    { "name": "角色名", "gender": "男/女", "role": "主角/配角/反派" }
   ],
   "episodes": [
     {
@@ -141,7 +141,7 @@ export function buildGenerationPrompt(params: BuildGenerationPromptParams): stri
   "title": "Script title",
   "premise": "Core premise (100-200 words)",
   "characters": [
-    { "name": "Character name", "role": "protagonist/supporting/antagonist" }
+    { "name": "Character name", "gender": "male/female", "role": "protagonist/supporting/antagonist" }
   ],
   "episodes": [
     {
