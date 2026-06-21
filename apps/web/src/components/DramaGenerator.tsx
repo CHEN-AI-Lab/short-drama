@@ -619,8 +619,8 @@ export default function DramaGenerator() {
           <div className="flex border-b border-gray-200 dark:border-gray-700">
             {(
               [
-                { key: 'characters', label: ot('characters') + ` (${result.characters.length})` },
-                { key: 'episodes', label: ot('episodes') + ` (${result.episodes.length})` },
+                { key: 'characters', label: ot('characters') },
+                { key: 'episodes', label: ot('episodes') },
                 { key: 'characterArcs', label: ot('characterArcs') },
               ] as { key: ResultTab; label: string }[]
             ).map((tab) => (
