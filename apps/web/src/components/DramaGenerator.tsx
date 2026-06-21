@@ -271,6 +271,7 @@ export default function DramaGenerator() {
     lines.push('**生成参数**')
     lines.push(`- 题材：${selectedGenres.map((g) => getGenreLabel(g)).join(' · ')}`)
     lines.push(`- 集数：${episodeCount} 集`)
+    lines.push(`- 角色数量：${r.characters.length} 位`)
     lines.push(`- 生成类型：${gtt(generationType)}`)
     lines.push('')
     lines.push('---')

@@ -72,27 +72,20 @@ export default function CharacterList({ characters, locale }: CharacterListProps
       {sorted.map((char, idx) => (
         <Card key={idx}>
           <CardContent className="space-y-3">
-            {/* Name + Gender + Age + Role */}
+            {/* Name + Role badge */}
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {char.name}
               </h4>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {char.gender && (genders[char.gender] || '')}
-                  {char.gender && char.age ? ' · ' : ''}
-                  {char.age ? `${char.age}岁` : ''}
-                </span>
-                <Badge color={roleColors[char.role] || 'default'}>
-                  {labels[char.role] || char.role}
-                </Badge>
-              </div>
+              <Badge color={roleColors[char.role] || 'default'}>
+                {labels[char.role] || char.role}
+              </Badge>
             </div>
 
-            {/* Gender age line for mobile / more visual */}
+            {/* Gender + Age line */}
             {(char.gender || char.age) && (
               <div className="text-xs text-gray-400 dark:text-gray-500">
-                {char.gender && genderEmoji[char.gender]} {char.gender && genders[char.gender]} {char.age ? `· ${char.age}岁` : ''}
+                {char.gender && (genderEmoji[char.gender] + ' ' + genders[char.gender])} {char.age ? `· ${char.age}岁` : ''}
               </div>
             )}
 
