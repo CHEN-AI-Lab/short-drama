@@ -285,6 +285,7 @@ export async function POST(request: Request) {
       (chars || []).map((c: any) => ({
         name: c.name || 'Unknown',
         age: c.age ? String(c.age) : undefined,
+        gender: c.gender === '男' ? 'male' : c.gender === 'female' ? 'female' : c.gender === 'male' ? 'male' : c.gender === '女' ? 'female' : undefined,
         personality: normalizePersonality(c.personality),
         background: c.background || '',
         arc: c.arc || '',

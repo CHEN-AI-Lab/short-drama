@@ -12,6 +12,7 @@ export type EpisodeCount = number
 export interface Character {
   name: string
   age?: string
+  gender?: 'male' | 'female'
   personality: string[]
   background: string
   arc: string

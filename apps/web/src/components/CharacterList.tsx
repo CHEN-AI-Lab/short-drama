@@ -31,6 +31,23 @@ const roleColors: Record<string, 'primary' | 'danger' | 'success' | 'default'> =
   minor: 'default',
 }
 
+const roleOrder: Record<string, number> = {
+  protagonist: 0,
+  supporting: 1,
+  antagonist: 2,
+  minor: 3,
+}
+
+const genderEmoji: Record<string, string> = {
+  male: '♂️',
+  female: '♀️',
+}
+
+const genderLabel: Record<string, Record<string, string>> = {
+  'zh-CN': { male: '男', female: '女' },
+  en: { male: 'Male', female: 'Female' },
+}
+
 export default function CharacterList({ characters, locale }: CharacterListProps) {
   const t = useTranslations('output')
 
@@ -43,17 +60,28 @@ export default function CharacterList({ characters, locale }: CharacterListProps
   }
 
   const labels = roleLabels[locale] || roleLabels['en']
+  const genders = genderLabel[locale] || genderLabel['en']
+
+  // Sort by role: protagonist → supporting → antagonist → minor
+  const sorted = [...characters].sort(
+    (a, b) => (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99)
+  )
 
   return (
     <div className="space-y-4">
-      {characters.map((char, idx) => (
+      {sorted.map((char, idx) => (
         <Card key={idx}>
           <CardContent className="space-y-3">
-            {/* Name + Role */}
+            {/* Name + Gender + Role */}
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {char.name}
                 {char.age ? <span className="text-sm font-normal text-gray-500 ml-2">({char.age})</span> : null}
+                {char.gender && (
+                  <span className="text-sm text-gray-400 ml-1.5" title={genders[char.gender]}>
+                    {genderEmoji[char.gender] || ''}
+                  </span>
+                )}
               </h4>
               <Badge color={roleColors[char.role] || 'default'}>
                 {labels[char.role] || char.role}
