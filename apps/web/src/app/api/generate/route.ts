@@ -306,14 +306,11 @@ export async function POST(request: Request) {
         title: ep.title || '',
         synopsis: ep.synopsis || ep.summary || '',
         scenes: (ep.scenes || []).map((s: any) => {
-          // Calculate scene duration for AI video generation
-          //   - Dialogue: ~4 chars/sec (Chinese speech rate)
-          //   - Description: ~8 chars/sec (visual narration)
-          //   - Pause between dialogue lines: 1s
-          //   - Scene transition buffer: 2s
-          //   - Minimum: 5s (quick reaction/reverse shot)
+          // Calculate scene duration for AI short drama generation
+          //   - Short drama pacing: fast speech (~6ch/s), brief visuals (~15ch/s)
           //   - AI video platform limit: 15s per segment
-          // Parse dialogue lines — AI may return as string separated by \n
+          //   - Segmentation at dialogue line boundaries (no mid-line split)
+          const descLen = (s.description || '').length
           const rawDialogues = Array.isArray(s.keyDialogue) ? s.keyDialogue :
             Array.isArray(s.dialogue) ? s.dialogue :
             typeof s.keyDialogue === 'string' ? s.keyDialogue.split('\n') :
@@ -321,35 +318,31 @@ export async function POST(request: Request) {
           const dialogues = rawDialogues
             .map((d: string) => d.trim())
             .filter((d: string) => d.length > 0 && !d.startsWith('（') && !d.startsWith('('))
+          const totalChars = dialogues.reduce((sum: number, d: string) => sum + d.length, 0)
 
-          // AI video segmentation: group description + dialogue into ≤15s clips
-          // Each dialogue line is atomic (cannot be split mid-line)
           const MAX_CLIP = 15
-          const descDuration = (s.description || '').length / 8 + 2  // description + buffer
-          const dialogueDurations = dialogues.map((d: string) => d.length / 4 + 1)  // speech + pause
+          // Fast-paced short drama timing
+          const speechTime = totalChars / 6      // ~6 chars/sec spoken
+          const descTime = descLen / 14           // ~14 chars/sec visual narration
+          const buffer = 1                        // scene transition
+          const naturalSeconds = Math.max(5, Math.round(descTime + speechTime + buffer))
 
-          // Build clips by accumulating units, cutting at dialogue boundaries
+          // Count clips by accumulating units at dialogue boundaries
+          const descClip = descTime + buffer
+          const lineClips = dialogues.map((d: string) => d.length / 6)
           let segments = 1
-          if (dialogueDurations.length > 0) {
-            let running = descDuration
-            for (const dur of dialogueDurations) {
-              if (running + dur > MAX_CLIP) {
-                segments++
-                running = dur
-              } else {
-                running += dur
-              }
+          if (lineClips.length > 0) {
+            let running = descClip
+            for (const lc of lineClips) {
+              if (running + lc > MAX_CLIP) { segments++; running = lc }
+              else { running += lc }
             }
-          } else {
-            // No dialogue — single clip, capped at 15s
-            segments = 1
           }
 
-          const totalSeconds = Math.max(5, Math.round(descDuration + dialogueDurations.reduce((a: number, b: number) => a + b, 0)))
-          const clampedSeconds = Math.min(totalSeconds, MAX_CLIP * segments)
+          const totalSeconds = segments * MAX_CLIP < naturalSeconds ? segments * MAX_CLIP : naturalSeconds
           const calculatedDuration = segments > 1
-            ? `${clampedSeconds}s/${segments}段`
-            : `${clampedSeconds}s`
+            ? `${totalSeconds}s/${segments}段`
+            : `${totalSeconds}s`
 
           return {
             title: s.title || '',

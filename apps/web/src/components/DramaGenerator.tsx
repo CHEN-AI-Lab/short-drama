@@ -280,6 +280,7 @@ export default function DramaGenerator() {
     r.characters.forEach((c, i) => {
       lines.push(`### ${i + 1}. ${c.name}`)
       lines.push(`- **角色定位**：${c.role === 'protagonist' ? '主角' : c.role === 'antagonist' ? '反派' : c.role === 'supporting' ? '配角' : '其他'}`)
+      if (c.gender) lines.push(`- **性别**：${c.gender === 'male' ? '男' : '女'}`)
       if (c.age) lines.push(`- **年龄**：${c.age}`)
       if (c.personality.length) lines.push(`- **性格**：${c.personality.join('、')}`)
       if (c.background) lines.push(`- **背景**：${c.background}`)
