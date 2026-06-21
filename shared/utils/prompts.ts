@@ -295,7 +295,8 @@ ${jsonStructure}
 5. 剧情有悬念和反转，节奏紧凑
 6. 角色性格鲜明，行为一致
 7. 每集结尾有悬念钩子
-8. 全部中文输出
+8. 全部中文输出，禁止中英文混写（角色名、专有名词除外）
+9. 角色名、地点名、术语气等专有名词请自行创作中文名称
 
 确保输出是有效 JSON，不要包含额外说明文字。`
   }
@@ -329,7 +330,8 @@ ${jsonStructure}
 5. Plot must have suspense and twists
 6. Characters must have distinct, consistent personalities
 7. Each episode ends with a cliffhanger
-8. Output in English
+8. Output exclusively in English — no mixing of languages
+9. Character names, locations, and terminology must be in English only
 
 Ensure valid JSON output only.`
 }
