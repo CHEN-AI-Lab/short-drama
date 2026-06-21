@@ -300,7 +300,13 @@ export async function POST(request: Request) {
         title: ep.title || '',
         synopsis: ep.synopsis || ep.summary || '',
         scenes: (ep.scenes || []).map((s: any) => {
-          // Calculate realistic scene duration for short dramas (竖屏短剧)
+          // Calculate scene duration for AI video generation
+          //   - Dialogue: ~4 chars/sec (Chinese speech rate)
+          //   - Description: ~8 chars/sec (visual narration)
+          //   - Pause between dialogue lines: 1s
+          //   - Scene transition buffer: 2s
+          //   - Minimum: 5s (quick reaction/reverse shot)
+          //   - AI video platform limit: 15s per segment
           const descLen = (s.description || '').length
           const dialogues = Array.isArray(s.keyDialogue) ? s.keyDialogue :
             Array.isArray(s.dialogue) ? s.dialogue :
@@ -308,18 +314,16 @@ export async function POST(request: Request) {
             typeof s.dialogue === 'string' ? [s.dialogue] : []
           const dialogueLines = dialogues.length
           const totalChars = dialogues.reduce((sum: number, d: string) => sum + d.length, 0)
-          // Realistic short-drama pacing:
-          //   - Description/narration: ~6 chars per second
-          //   - Dialogue: ~4 chars per second (Chinese speech rate)
-          //   - Pause between dialogue lines: ~2s
-          //   - Minimum scene: 15s (quick exchange), typical: 30-90s
-          const descTime = descLen / 6
+          const descTime = descLen / 8
           const speechTime = totalChars / 4
-          const pauses = Math.max(0, dialogueLines - 1) * 2
-          const totalSeconds = Math.max(15, Math.round(descTime + speechTime + pauses))
-          const calculatedDuration = totalSeconds >= 60
-            ? `${Math.floor(totalSeconds / 60)}min${(totalSeconds % 60) ? (totalSeconds % 60) + 's' : ''}`
-            : `${totalSeconds}s`
+          const pauses = Math.max(0, dialogueLines - 1) * 1
+          const buffer = 2
+          const naturalSeconds = Math.round(descTime + speechTime + pauses + buffer)
+          const clampedSeconds = Math.max(5, naturalSeconds)
+          const segments = Math.ceil(clampedSeconds / 15)
+          const calculatedDuration = segments > 1
+            ? `15s×${segments}`
+            : `${clampedSeconds}s`
 
           return {
             title: s.title || '',
