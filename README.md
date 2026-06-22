@@ -41,12 +41,26 @@ pnpm dev
 
 ## Environment Variables
 
+Local development uses `.env.local`. Shared credentials live in `/home/ubuntu/workspace/global.env`.
+
+**global.env naming convention:**
+
+| Prefix | Meaning | Example |
+|--------|---------|---------|
+| `SD_PROD_` | short-drama production | `SD_PROD_SUPABASE_URL` |
+| `SD_STAGING_` | short-drama staging | `SD_STAGING_SUPABASE_URL` |
+| `APS_PROD_` | ai-portfolio-studio production | *(future)* |
+
+**Vercel env vars (set automatically by `scripts/set-env.py`):**
+
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `SENSENOVA_ACCESS_KEY` | ✅ | SenseTime API access key |
-| `SENSENOVA_SECRET_KEY` | ✅ | SenseTime API secret key |
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key |
+| `OPENAI_API_KEY` | ✅ | AI API key (SenseTime) |
+| `OPENAI_BASE_URL` | ✅ | AI API base URL |
+| `OPENAI_MODEL` | ✅ | AI model name |
 
 ## Tech Stack
 
@@ -73,12 +87,22 @@ short-drama/
 
 ## Deploy
 
+### Production (main branch)
 ```bash
-# Push to GitHub, Vercel auto-deploys main branch
 git push origin main
 ```
+Vercel auto-deploys from `main` branch.
 
-Or connect the repo in Vercel dashboard.
+### Staging (staging branch)
+```bash
+git checkout staging
+git merge feat/xxx
+git push origin staging
+```
+Vercel auto-deploys to `https://short-drama-staging.vercel.app`.
+
+After testing, push `staging` → GitHub auto-creates a PR to `main`.
+Review and click **Merge pull request** on GitHub to deploy to production.
 
 ## License
 

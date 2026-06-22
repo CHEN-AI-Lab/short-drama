@@ -1,0 +1,40 @@
+name: Auto PR - staging to main
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Pull Request (staging → main)
+        id: create-pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          branch: staging
+          title: "🔄 Auto PR: staging → main"
+          body: |
+            ## Auto-generated PR from staging branch
+            
+            A push was made to the `staging` branch.
+            Review the changes below and merge when ready for production.
+            
+            **Checklist before merging:**
+            - [ ] Code reviewed
+            - [ ] Tested on staging environment
+            - [ ] Database migrations verified (if any)
+            - [ ] No breaking changes
+            
+            _This PR was automatically created by GitHub Actions._
+          labels: auto-pr, staging
+          delete-branch: false
