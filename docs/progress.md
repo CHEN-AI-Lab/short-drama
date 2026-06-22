@@ -92,3 +92,13 @@ Production-ready SaaS application deployed on Vercel. Full auth, AI generation, 
 - [ ] Script export PDF
 - [ ] Collaborative editing features
 - [ ] Database layer for persistent history
+
+## 2026-06-22: Generation Checkpoint — resume on batch failure
+- [x] `GenerationCheckpoint` type in shared/types
+- [x] `CHECKPOINT_KEY` + `CHECKPOINT_TTL_MS` in shared/constants
+- [x] `saveGenerationCheckpoint`, `loadGenerationCheckpoint`, `clearGenerationCheckpoint`, `matchGenerationCheckpoint` in shared/hooks
+- [x] Checkpoint saved to localStorage after each successful batch
+- [x] On batch failure: partial result displayed with "继续生成" button
+- [x] On retry: checkpoint detected → resume from last completed batch
+- [x] On success/clean start: checkpoint cleared
+- [x] 6-hour TTL, settings-match guard, stale checkpoint cleanup

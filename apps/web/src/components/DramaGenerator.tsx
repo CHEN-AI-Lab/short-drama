@@ -8,6 +8,10 @@ import {
   GENERATION_TYPES,
   generationRequestSchema,
   DAILY_LIMIT_FREE,
+  saveGenerationCheckpoint,
+  loadGenerationCheckpoint,
+  matchGenerationCheckpoint,
+  clearGenerationCheckpoint,
 } from 'shared'
 import { generateDrama } from 'shared/api'
 import { useDramaHistory } from 'shared'
@@ -19,6 +23,7 @@ import type {
   GenreInfo,
   GenerationTypeInfo,
   HistoryItem,
+  Locale,
 } from 'shared'
 import { GenrePill, Button, Card, CardContent, Badge } from 'ui'
 import { useUser } from './AuthProvider'
@@ -32,7 +37,7 @@ export default function DramaGenerator() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const locale = (params.locale as string) || 'zh-CN'
+  const locale = (params.locale as Locale) || 'zh-CN'
   const t = useTranslations('home')
   const ct = useTranslations('common')
   const ot = useTranslations('output')
@@ -164,12 +169,38 @@ export default function DramaGenerator() {
     const targetCount = autoEpisodeCount ? 0 : episodeCount
     const batchCount = autoEpisodeCount ? MAX_AUTO_BATCHES : Math.ceil(targetCount / BATCH_SIZE)
 
-    let merged: GenerationResponse = { title: '', premise: '', characters: [], episodes: [], characterArcs: [] }
-    const seenCharNames = new Set<string>()
-    const seenArcChars = new Set<string>()
+    // ── Check for resume-able checkpoint ──
+    const checkpoint = loadGenerationCheckpoint()
+    const resumeData = checkpoint && matchGenerationCheckpoint(checkpoint, {
+      genres: selectedGenres,
+      episodeCount,
+      generationType,
+      locale,
+      additionalInstructions: additionalInstructions || undefined,
+      autoEpisodeCount,
+    }) ? checkpoint : null
+
+    let merged: GenerationResponse
+    let startBatch: number
+    let seenCharNames: Set<string>
+    let seenArcChars: Set<string>
+
+    if (resumeData) {
+      merged = resumeData.result
+      startBatch = resumeData.completedBatchIndex + 1
+      seenCharNames = new Set(merged.characters.map((c) => c.name))
+      seenArcChars = new Set(merged.characterArcs.filter((a) => a.character?.name).map((a) => a.character.name))
+      clearGenerationCheckpoint()
+    } else {
+      merged = { title: '', premise: '', characters: [], episodes: [], characterArcs: [] }
+      startBatch = 0
+      seenCharNames = new Set<string>()
+      seenArcChars = new Set<string>()
+      clearGenerationCheckpoint() // Clear stale checkpoint if settings changed
+    }
 
     try {
-      for (let batch = 0; batch < batchCount; batch++) {
+      for (let batch = startBatch; batch < batchCount; batch++) {
         setBatchProgress({ current: batch + 1, total: autoEpisodeCount ? String(MAX_AUTO_BATCHES) : String(batchCount) })
 
         const startEp = merged.episodes.length + 1
@@ -188,6 +219,21 @@ export default function DramaGenerator() {
         const res = await generateDrama(req as any)
 
         if (res.error) {
+          // Save checkpoint so user can resume from where it failed
+          saveGenerationCheckpoint({
+            genres: selectedGenres,
+            episodeCount,
+            generationType,
+            locale,
+            additionalInstructions: additionalInstructions || undefined,
+            autoEpisodeCount,
+            result: merged,
+            completedBatchIndex: batch - 1,
+            totalBatches: batchCount,
+            nextStartEpisode: startEp,
+            timestamp: Date.now(),
+          })
+          setResult(merged) // Show partial result even on failure
           setError(translateError(res.error))
           setLoading(false)
           setBatchProgress(null)
@@ -223,6 +269,21 @@ export default function DramaGenerator() {
 
         // Auto mode: stop when AI signals the story is complete (storyComplete: true)
         if (autoEpisodeCount && res.storyComplete === true) break
+
+        // Save checkpoint after each successful batch
+        saveGenerationCheckpoint({
+          genres: selectedGenres,
+          episodeCount,
+          generationType,
+          locale,
+          additionalInstructions: additionalInstructions || undefined,
+          autoEpisodeCount,
+          result: merged,
+          completedBatchIndex: batch,
+          totalBatches: batchCount,
+          nextStartEpisode: merged.episodes.length + 1,
+          timestamp: Date.now(),
+        })
       }
 
       if (merged.episodes.length === 0) {
@@ -232,6 +293,8 @@ export default function DramaGenerator() {
         return
       }
 
+      // Success — clear checkpoint, save to history
+      clearGenerationCheckpoint()
       setResult(merged)
       setActiveTab('characters')
       if (autoEpisodeCount && merged.episodes.length > 0) {
@@ -248,6 +311,23 @@ export default function DramaGenerator() {
       })
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } catch (err) {
+      // Save checkpoint on unexpected error too, if we have partial data
+      if (merged.episodes.length > 0) {
+        saveGenerationCheckpoint({
+          genres: selectedGenres,
+          episodeCount,
+          generationType,
+          locale,
+          additionalInstructions: additionalInstructions || undefined,
+          autoEpisodeCount,
+          result: merged,
+          completedBatchIndex: -1,
+          totalBatches: batchCount,
+          nextStartEpisode: merged.episodes.length + 1,
+          timestamp: Date.now(),
+        })
+        setResult(merged)
+      }
       setError(translateError(err instanceof Error ? err.message : et('apiError')))
     } finally {
       setLoading(false)
@@ -572,8 +652,17 @@ export default function DramaGenerator() {
           </svg>
           <div className="flex-1">
             <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            {result && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {locale === 'zh-CN' ? '已生成部分内容，可继续生成' : 'Partial content generated, can continue'}
+              </p>
+            )}
           </div>
-          <Button variant="secondary" size="sm" onClick={handleGenerate}>{ct('retry')}</Button>
+          <Button variant="secondary" size="sm" onClick={handleGenerate}>
+            {result
+              ? (locale === 'zh-CN' ? '继续生成' : 'Continue')
+              : ct('retry')}
+          </Button>
         </div>
       )}
 

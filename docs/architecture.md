@@ -48,7 +48,8 @@ short-drama/
 3. API route checks auth → enforces daily limit → calls AI API (SenseTime primary, backup fallback)
 4. AI returns generated script structure (episodes, scenes, characters)
 5. Large scripts are batch-generated (3 episodes per batch to fit Vercel Hobby 10s limit)
-6. Frontend displays results with tab-based browsing (characters / episodes / arcs)
+6. If a batch fails, partial results are saved as a **checkpoint** in localStorage; user can resume from the last completed batch
+7. Frontend displays results with tab-based browsing (characters / episodes / arcs)
 
 ## Generation Types
 

@@ -32,5 +32,8 @@ export const CHARACTER_ARCHETYPES = {
 
 export const DAILY_LIMIT_FREE = 3
 
+export const CHECKPOINT_KEY = 'short_drama_generation_checkpoint'
+export const CHECKPOINT_TTL_MS = 6 * 60 * 60 * 1000 // 6 hours — resume window
+
 // ─── Locale data ──────────────────────────
 export { locales, defaultLocale } from './locales'

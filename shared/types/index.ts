@@ -92,3 +92,27 @@ export interface HistoryItem {
   /** Full generation result stored for detail view */
   result?: GenerationResponse
 }
+
+/**
+ * Checkpoint for resume — saved to localStorage when batch generation fails midway.
+ * Allows resuming from the last successfully completed batch.
+ */
+export interface GenerationCheckpoint {
+  /** The settings that produced this checkpoint (for matching) */
+  genres: DramaGenre[]
+  episodeCount: EpisodeCount
+  generationType: GenerationType
+  locale: Locale
+  additionalInstructions?: string
+  autoEpisodeCount: boolean
+  /** The accumulated result so far */
+  result: GenerationResponse
+  /** How many batches completed (0-indexed, so next batch index is completedBatchIndex + 1) */
+  completedBatchIndex: number
+  /** Total batches (for display purposes) */
+  totalBatches: number
+  /** The episode number the next batch should start from */
+  nextStartEpisode: number
+  /** Timestamp when the checkpoint was saved */
+  timestamp: number
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import type { HistoryItem } from '../types'
+import type { HistoryItem, GenerationCheckpoint, DramaGenre, EpisodeCount, GenerationType, Locale } from '../types'
 
 const STORAGE_KEY = 'short_drama_history'
 const PAID_KEY = 'short_drama_paid'
@@ -10,6 +10,75 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 export interface PaymentStatus {
   ready: boolean
   verified: boolean
+}
+
+const CHECKPOINT_STORAGE_KEY = 'short_drama_generation_checkpoint'
+const CHECKPOINT_TTL_MS = 6 * 60 * 60 * 1000 // 6 hours
+
+/**
+ * Save a generation checkpoint to localStorage for resume on failure.
+ */
+export function saveGenerationCheckpoint(checkpoint: GenerationCheckpoint): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(CHECKPOINT_STORAGE_KEY, JSON.stringify({ ...checkpoint, timestamp: Date.now() }))
+  } catch { /* silently ignore */ }
+}
+
+/**
+ * Load a checkpoint from localStorage. Returns null if expired or missing.
+ */
+export function loadGenerationCheckpoint(): GenerationCheckpoint | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(CHECKPOINT_STORAGE_KEY)
+    if (!raw) return null
+    const cp: GenerationCheckpoint & { timestamp: number } = JSON.parse(raw)
+    if (Date.now() - cp.timestamp > CHECKPOINT_TTL_MS) {
+      localStorage.removeItem(CHECKPOINT_STORAGE_KEY)
+      return null
+    }
+    return cp
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Clear the generation checkpoint from localStorage.
+ */
+export function clearGenerationCheckpoint(): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(CHECKPOINT_STORAGE_KEY)
+  } catch { /* silently ignore */ }
+}
+
+/**
+ * Check if a checkpoint matches the current generation settings.
+ */
+export function matchGenerationCheckpoint(
+  cp: GenerationCheckpoint,
+  params: {
+    genres: DramaGenre[]
+    episodeCount: EpisodeCount
+    generationType: GenerationType
+    locale: Locale
+    additionalInstructions?: string
+    autoEpisodeCount: boolean
+  }
+): boolean {
+  if (cp.autoEpisodeCount !== params.autoEpisodeCount) return false
+  if (cp.generationType !== params.generationType) return false
+  if (cp.locale !== params.locale) return false
+  if (cp.additionalInstructions !== (params.additionalInstructions || '')) return false
+  if (!cp.autoEpisodeCount && cp.episodeCount !== params.episodeCount) return false
+  // Compare genres as sets
+  const cpGenres = new Set(cp.genres)
+  const paramsGenres = new Set(params.genres)
+  if (cpGenres.size !== paramsGenres.size) return false
+  for (const g of cpGenres) { if (!paramsGenres.has(g)) return false }
+  return true
 }
 
 /**

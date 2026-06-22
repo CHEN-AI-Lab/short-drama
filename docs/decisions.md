@@ -93,3 +93,26 @@
 - `apps/web/src/components/DramaGenerator.tsx` — sends `autoEpisodeCount` flag through to prompt builder; checks `res.storyComplete === true` to stop
 
 **Consequence**: Auto mode now generates the right number of episodes based on story pacing. The AI decides when the story is done. Safety limit of 60 episodes (20 batches × 3 eps) prevents infinite loops if the AI malfunctions.
+
+---
+
+## ADR-010: Generation Checkpoint — resume on batch failure
+
+**Context**: AI API (SenseTime) can take 55–67s per batch of 3 episodes, dangerously close to the client's 70s timeout. If a single batch times out, the entire generation is lost and the user must start from scratch.
+
+**Decision**: Save a `GenerationCheckpoint` to localStorage after each successful batch. On failure (either API error or network error), the partial result is displayed to the user with a "继续生成" (Continue) button. Clicking it loads the checkpoint, detects matching settings, and resumes generation from the last completed batch — skipping already-generated episodes.
+
+Key design points:
+- Checkpoint stored in localStorage with key `short_drama_generation_checkpoint`
+- 6-hour TTL on checkpoints before auto-expiry
+- `matchGenerationCheckpoint()` compares settings (genres, type, locale, instructions) — only resumes if identical
+- Checkpoint cleared on: (a) successful completion, (b) settings change, (c) explicit "new generation"
+- On resume, the component restores `seenCharNames` and `seenArcChars` sets for correct deduplication
+
+**Files changed**:
+- `shared/types/index.ts` — added `GenerationCheckpoint` interface
+- `shared/constants/index.ts` — added `CHECKPOINT_KEY`, `CHECKPOINT_TTL_MS`
+- `shared/hooks/index.ts` — added `saveGenerationCheckpoint`, `loadGenerationCheckpoint`, `clearGenerationCheckpoint`, `matchGenerationCheckpoint`
+- `apps/web/src/components/DramaGenerator.tsx` — checkpoint save after each batch, resume on retry/continue, partial result display on failure
+
+**Consequence**: Users no longer lose all progress when a batch fails mid-way. Partial content is visible and can be completed on retry. The safety net covers both explicit API errors (`res.error`) and unexpected JS exceptions (`catch`).
