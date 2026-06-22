@@ -92,6 +92,9 @@ export default function DramaGenerator() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ResultTab>('characters')
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number | string } | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editPremise, setEditPremise] = useState('')
   const resultRef = useRef<HTMLDivElement>(null)
   const BATCH_SIZE = 3 // episodes per batch (fits Vercel Hobby 10s limit)
   const MAX_AUTO_BATCHES = 20 // auto mode safety limit: at most 60 episodes (20 × 3)
@@ -336,6 +339,80 @@ export default function DramaGenerator() {
       setBatchProgress(null)
     }
   }, [selectedGenres, episodeCount, generationType, locale, additionalInstructions, et, autoEpisodeCount])
+
+  // ── Edit mode init ──
+  useEffect(() => {
+    if (result) {
+      setEditTitle(result.title)
+      setEditPremise(result.premise)
+    }
+  }, [result])
+
+  // ── Continue generation (add more episodes) ──
+  const handleContinue = useCallback(() => {
+    if (!result || result.episodes.length === 0) return
+    const more = episodeCount > result.episodes.length
+      ? episodeCount
+      : result.episodes.length + 6 // add another 6 episodes
+    const newEpCount = Math.min(more, 200) as EpisodeCount
+    setAutoEpisodeCount(false)
+    setEpisodeCount(newEpCount)
+    saveGenerationCheckpoint({
+      genres: selectedGenres,
+      episodeCount: newEpCount,
+      generationType,
+      locale,
+      additionalInstructions: additionalInstructions || undefined,
+      autoEpisodeCount: false,
+      result: {
+        title: editTitle,
+        premise: editPremise,
+        characters: result.characters,
+        episodes: result.episodes,
+        characterArcs: result.characterArcs,
+        storyComplete: false,
+      },
+      completedBatchIndex: Math.ceil(result.episodes.length / BATCH_SIZE) - 1,
+      totalBatches: Math.ceil(newEpCount / BATCH_SIZE),
+      nextStartEpisode: result.episodes.length + 1,
+      timestamp: Date.now(),
+    })
+    setIsEditing(false)
+    setTimeout(() => handleGenerate(), 50)
+  }, [result, selectedGenres, episodeCount, generationType, locale, additionalInstructions, editTitle, editPremise, handleGenerate])
+
+  // ── Edit handlers ──
+  const handleEditStart = useCallback(() => {
+    if (!result) return
+    setEditTitle(result.title)
+    setEditPremise(result.premise)
+    setIsEditing(true)
+  }, [result])
+
+  const handleEditCancel = useCallback(() => {
+    setIsEditing(false)
+    if (result) {
+      setEditTitle(result.title)
+      setEditPremise(result.premise)
+    }
+  }, [result])
+
+  const handleEditSave = useCallback(() => {
+    if (!result) return
+    setResult({
+      ...result,
+      title: editTitle,
+      premise: editPremise,
+    })
+    setIsEditing(false)
+  }, [result, editTitle, editPremise])
+
+  // ── Regenerate (start fresh with same settings) ──
+  const handleRegenerate = useCallback(() => {
+    clearGenerationCheckpoint()
+    setIsEditing(false)
+    handleGenerate()
+  }, [handleGenerate])
 
   const getGenreLabel = (genre: DramaGenre): string => gt(genre)
   const getGenreIcon = (genre: DramaGenre): string =>
@@ -675,34 +752,54 @@ export default function DramaGenerator() {
           <Card>
             <CardContent className="space-y-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {result.title}
-                </h2>
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {selectedGenres.map((g) => (
-                    <span key={g} className="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
-                      {getGenreIcon(g)} {getGenreLabel(g)}
-                    </span>
-                  ))}
-                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
-                    {gtt(generationType)}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  <span className="inline-flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
-                    {result.characters.length} {locale === 'zh-CN' ? '位角色' : 'characters'}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                    {result.episodes.length} {locale === 'zh-CN' ? '集' : 'episodes'}
-                  </span>
-                </div>
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full text-2xl font-bold text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      placeholder={locale === 'zh-CN' ? '剧本标题' : 'Script title'}
+                    />
+                    <textarea
+                      value={editPremise}
+                      onChange={(e) => setEditPremise(e.target.value)}
+                      rows={3}
+                      className="w-full text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                      placeholder={locale === 'zh-CN' ? '核心设定' : 'Core premise'}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {result.title}
+                    </h2>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {selectedGenres.map((g) => (
+                        <span key={g} className="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                          {getGenreIcon(g)} {getGenreLabel(g)}
+                        </span>
+                      ))}
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                        {gtt(generationType)}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="inline-flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                        {result.characters.length} {locale === 'zh-CN' ? '位角色' : 'characters'}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                        {result.episodes.length} {locale === 'zh-CN' ? '集' : 'episodes'}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed mt-3">
+                      {result.premise}
+                    </p>
+                  </>
+                )}
               </div>
-
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {result.premise}
-              </p>
             </CardContent>
           </Card>
 
@@ -749,10 +846,32 @@ export default function DramaGenerator() {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-center pt-4">
-            <Button variant="ghost" size="md" onClick={() => downloadMd(result)}>
-              {locale === 'zh-CN' ? '📥 下载剧本' : '📥 Download Script'}
-            </Button>
+          <div className="flex flex-wrap justify-center gap-3 pt-4">
+            {isEditing ? (
+              <>
+                <Button variant="primary" size="md" onClick={handleEditSave}>
+                  {locale === 'zh-CN' ? '💾 保存' : '💾 Save'}
+                </Button>
+                <Button variant="secondary" size="md" onClick={handleEditCancel}>
+                  {locale === 'zh-CN' ? '取消' : 'Cancel'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="md" onClick={() => downloadMd(result)}>
+                  {locale === 'zh-CN' ? '📥 下载' : '📥 Download'}
+                </Button>
+                <Button variant="secondary" size="md" onClick={handleEditStart}>
+                  {locale === 'zh-CN' ? '✏️ 编辑' : '✏️ Edit'}
+                </Button>
+                <Button variant="secondary" size="md" onClick={handleRegenerate}>
+                  {locale === 'zh-CN' ? '🔄 重新生成' : '🔄 Regenerate'}
+                </Button>
+                <Button variant="gradient" size="md" onClick={handleContinue} disabled={!result || loading}>
+                  {locale === 'zh-CN' ? '➕ 继续生成' : '➕ Continue'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
