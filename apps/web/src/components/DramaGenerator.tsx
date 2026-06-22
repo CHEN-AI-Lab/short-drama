@@ -233,7 +233,9 @@ export default function DramaGenerator() {
             nextStartEpisode: startEp,
             timestamp: Date.now(),
           })
-          setResult(merged) // Show partial result even on failure
+          if (merged.episodes.length > 0 || merged.characters.length > 0) {
+            setResult(merged) // Show partial result even on failure
+          }
           setError(translateError(res.error))
           setLoading(false)
           setBatchProgress(null)
