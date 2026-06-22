@@ -64,22 +64,10 @@ env_vars = {
     "SUPABASE_SERVICE_ROLE_KEY": "encrypted",
 }
 
-# Map global.env key names to Vercel env var names
-# (format: <project>_<env>_<varname> → Vercel var name)
-KEY_MAP = {
-    "SD_PROD_SUPABASE_URL": "NEXT_PUBLIC_SUPABASE_URL",
-    "SD_PROD_SUPABASE_ANON_KEY": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-    "SD_PROD_SUPABASE_SERVICE_KEY": "SUPABASE_SERVICE_ROLE_KEY",
-}
-# Reverse map: Vercel var name → global.env key
-VAR_TO_GLOBAL = {v: k for k, v in KEY_MAP.items()}
-
 for name, stype in env_vars.items():
-    # Lookup: try direct match first, then KEY_MAP reverse lookup
-    global_key = VAR_TO_GLOBAL.get(name, name)
-    val = d.get(global_key)
+    val = d.get(name)
     if not val:
-        print(f"Skip {name} (neither '{name}' nor '{global_key}' in global.env)")
+        print(f"Skip {name} (not in global.env)")
         continue
     
     payload = json.dumps({

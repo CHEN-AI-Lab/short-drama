@@ -45,11 +45,8 @@ Local development uses `.env.local`. Shared credentials live in `/home/ubuntu/wo
 
 **global.env naming convention:**
 
-| Prefix | Meaning | Example |
-|--------|---------|---------|
-| `SD_PROD_` | short-drama production | `SD_PROD_SUPABASE_URL` |
-| `SD_STAGING_` | short-drama staging | `SD_STAGING_SUPABASE_URL` |
-| `APS_PROD_` | ai-portfolio-studio production | *(future)* |
+Production vars use direct names (e.g. `NEXT_PUBLIC_SUPABASE_URL`).
+Staging vars use `STAGING_` prefix (e.g. `STAGING_NEXT_PUBLIC_SUPABASE_URL`).
 
 **Vercel env vars (set automatically by `scripts/set-env.py`):**
 
