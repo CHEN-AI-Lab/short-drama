@@ -891,7 +891,7 @@ export default function DramaGenerator() {
           <div className="flex flex-wrap justify-center gap-3 pt-4">
             {isEditing ? (
               <>
-                <Button variant="primary" size="md" onClick={handleEditSave}>
+                <Button variant="gradient" size="md" onClick={handleEditSave}>
                   {locale === 'zh-CN' ? '💾 保存' : '💾 Save'}
                 </Button>
                 <Button variant="secondary" size="md" onClick={handleEditCancel}>
