@@ -24,6 +24,9 @@ import type {
   GenerationTypeInfo,
   HistoryItem,
   Locale,
+  Character,
+  EpisodeOutline,
+  CharacterArc,
 } from 'shared'
 import { GenrePill, Button, Card, CardContent, Badge } from 'ui'
 import { useUser } from './AuthProvider'
@@ -406,6 +409,33 @@ export default function DramaGenerator() {
     })
     setIsEditing(false)
   }, [result, editTitle, editPremise])
+
+  // ── Inline editing: child component updates ──
+  const handleResultUpdate = useCallback((update: Partial<GenerationResponse>) => {
+    if (!result) return
+    setResult({ ...result, ...update })
+  }, [result])
+
+  const handleCharacterEdit = useCallback((index: number, char: Character) => {
+    if (!result) return
+    const updated = [...result.characters]
+    updated[index] = char
+    setResult({ ...result, characters: updated })
+  }, [result])
+
+  const handleEpisodeEdit = useCallback((index: number, ep: EpisodeOutline) => {
+    if (!result) return
+    const updated = [...result.episodes]
+    updated[index] = ep
+    setResult({ ...result, episodes: updated })
+  }, [result])
+
+  const handleArcEdit = useCallback((index: number, arc: CharacterArc) => {
+    if (!result) return
+    const updated = [...result.characterArcs]
+    updated[index] = arc
+    setResult({ ...result, characterArcs: updated })
+  }, [result])
 
   // ── Regenerate (start fresh with same settings) ──
   const handleRegenerate = useCallback(() => {
@@ -830,7 +860,12 @@ export default function DramaGenerator() {
           {/* Tab content */}
           <div>
             {activeTab === 'characters' && (
-              <CharacterList characters={result.characters} locale={locale} />
+              <CharacterList
+                characters={result.characters}
+                locale={locale}
+                editing={isEditing}
+                onCharacterEdit={handleCharacterEdit}
+              />
             )}
             {activeTab === 'episodes' && (
               <EpisodeList
@@ -838,10 +873,17 @@ export default function DramaGenerator() {
                 locale={locale}
                 title={result.title}
                 premise={result.premise}
+                editing={isEditing}
+                onEpisodeEdit={handleEpisodeEdit}
               />
             )}
             {activeTab === 'characterArcs' && (
-              <CharacterArcsView arcs={result.characterArcs} locale={locale} />
+              <CharacterArcsView
+                arcs={result.characterArcs}
+                locale={locale}
+                editing={isEditing}
+                onArcEdit={handleArcEdit}
+              />
             )}
           </div>
 
@@ -849,7 +891,7 @@ export default function DramaGenerator() {
           <div className="flex flex-wrap justify-center gap-3 pt-4">
             {isEditing ? (
               <>
-                <Button variant="primary" size="md" onClick={handleEditSave}>
+                <Button variant="gradient" size="md" onClick={handleEditSave}>
                   {locale === 'zh-CN' ? '💾 保存' : '💾 Save'}
                 </Button>
                 <Button variant="secondary" size="md" onClick={handleEditCancel}>
