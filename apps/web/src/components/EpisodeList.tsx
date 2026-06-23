@@ -3,13 +3,24 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, Badge } from 'ui'
-import type { EpisodeOutline } from 'shared'
+import type { EpisodeOutline, Scene } from 'shared'
 
 interface EpisodeListProps {
   episodes: EpisodeOutline[]
   locale: string
   title: string
   premise: string
+  editing?: boolean
+  onEpisodeEdit?: (index: number, ep: EpisodeOutline) => void
+}
+
+const inputCls = 'w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+const inputClsSm = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500'
+
+function editScene(ep: EpisodeOutline, si: number, scene: Scene): EpisodeOutline {
+  const scenes = [...(ep.scenes || [])]
+  scenes[si] = scene
+  return { ...ep, scenes }
 }
 
 export default function EpisodeList({
@@ -17,6 +28,8 @@ export default function EpisodeList({
   locale,
   title,
   premise,
+  editing,
+  onEpisodeEdit,
 }: EpisodeListProps) {
   const t = useTranslations('output')
   const [openEpisode, setOpenEpisode] = useState<number | null>(null)
@@ -41,9 +54,101 @@ export default function EpisodeList({
   const sceneLabel = t('scenes')
   const hookLabel = t('hook')
 
+  if (editing && onEpisodeEdit) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          {episodes.map((ep, idx) => (
+            <Card key={ep.episode}>
+              <CardContent className="space-y-3">
+                <div className="text-xs font-medium text-indigo-500">
+                  {episodeLabel(ep.episode)}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    {locale === 'zh-CN' ? '标题' : 'Title'}
+                  </label>
+                  <input
+                    type="text"
+                    value={ep.title}
+                    onChange={(e) => onEpisodeEdit(idx, { ...ep, title: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    {locale === 'zh-CN' ? '概要' : 'Synopsis'}
+                  </label>
+                  <textarea
+                    value={ep.synopsis}
+                    onChange={(e) => onEpisodeEdit(idx, { ...ep, synopsis: e.target.value })}
+                    rows={3}
+                    className={inputCls + ' resize-none'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    {locale === 'zh-CN' ? '悬念钩子' : 'Hook'}
+                  </label>
+                  <input
+                    type="text"
+                    value={ep.hook || ''}
+                    onChange={(e) => onEpisodeEdit(idx, { ...ep, hook: e.target.value })}
+                    className={inputCls}
+                  />
+                </div>
+                {/* Scenes */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    {locale === 'zh-CN' ? '场景' : 'Scenes'}
+                  </label>
+                  <div className="space-y-2">
+                    {(ep.scenes || []).map((scene, si) => (
+                      <div key={si} className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={scene.title}
+                            onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, title: e.target.value }))}
+                            className={inputClsSm}
+                            placeholder={locale === 'zh-CN' ? '场景名' : 'Scene title'}
+                          />
+                          <input
+                            type="text"
+                            value={scene.location}
+                            onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, location: e.target.value }))}
+                            className={inputClsSm}
+                            placeholder={locale === 'zh-CN' ? '地点' : 'Location'}
+                          />
+                        </div>
+                        <textarea
+                          value={scene.description}
+                          onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, description: e.target.value }))}
+                          rows={2}
+                          className={inputClsSm + ' resize-none'}
+                          placeholder={locale === 'zh-CN' ? '描述' : 'Description'}
+                        />
+                        <textarea
+                          value={(scene.keyDialogue || []).join('\n')}
+                          onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, keyDialogue: e.target.value.split('\n').filter(Boolean) }))}
+                          rows={3}
+                          className={inputClsSm + ' resize-none font-mono'}
+                          placeholder={locale === 'zh-CN' ? '对白（每行一段）' : 'Dialogue (one line per exchange)'}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Episode accordion */}
       <div className="space-y-3">
         {episodes.map((ep) => {
           const isOpen = openEpisode === ep.episode
@@ -51,7 +156,6 @@ export default function EpisodeList({
           return (
             <Card key={ep.episode} hover onClick={() => toggleEpisode(ep.episode)}>
               <CardContent className="space-y-2">
-                {/* Episode header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Badge color="primary">{episodeLabel(ep.episode)}</Badge>
@@ -75,15 +179,12 @@ export default function EpisodeList({
                   </svg>
                 </div>
 
-                {/* Synopsis (always visible) */}
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   {ep.synopsis}
                 </p>
 
-                {/* Expanded content */}
                 {isOpen && (
                   <div className="pt-3 space-y-4 border-t border-gray-100 dark:border-gray-700">
-                    {/* Hook */}
                     {ep.hook && (
                       <div>
                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -95,7 +196,6 @@ export default function EpisodeList({
                       </div>
                     )}
 
-                    {/* Scenes */}
                     {ep.scenes && ep.scenes.length > 0 && (
                       <div>
                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -141,7 +241,6 @@ export default function EpisodeList({
                                   </span>
                                   <div className="mt-2 space-y-1.5">
                                     {scene.keyDialogue.map((line, di) => {
-                                      // Split character name from dialogue text (format: "角色名：对白" or "角色名: 对白")
                                       const sepIndex = Math.min(
                                         line.indexOf('\uFF1A') >= 0 ? line.indexOf('\uFF1A') : Infinity,
                                         line.indexOf(':') >= 0 ? line.indexOf(':') : Infinity,
@@ -173,8 +272,8 @@ export default function EpisodeList({
                 )}
               </CardContent>
             </Card>
-          )
-        })}
+          )}
+        )}
       </div>
     </div>
   )
