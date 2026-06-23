@@ -148,12 +148,6 @@ export default function CharacterList({ characters, locale, editing, onCharacter
                 multiline
               />
               <EditableField
-                label={locale === 'zh-CN' ? '弧光' : 'Arc'}
-                value={char.arc}
-                onChange={(v) => onCharacterEdit(idx, { ...char, arc: v })}
-                multiline
-              />
-              <EditableField
                 label={locale === 'zh-CN' ? '关系（格式：角色名-关系）' : 'Relationships (format: name-relation)'}
                 value={char.relationships.map(r => `${r.name}-${r.relation}`).join(', ')}
                 onChange={(v) => {

@@ -102,3 +102,9 @@ Production-ready SaaS application deployed on Vercel. Full auth, AI generation, 
 - [x] On retry: checkpoint detected → resume from last completed batch
 - [x] On success/clean start: checkpoint cleared
 - [x] 6-hour TTL, settings-match guard, stale checkpoint cleanup
+
+## 2026-06-23: 修复 4 个功能问题
+- [x] **重新生成**：现在把现有剧本作为上下文传给 AI，让 AI 从现有内容出发优化，而不是凭空创建新剧本
+- [x] **删除弧光冗余模块**：人物介绍 Tab 中的弧光字段已删除（该字段在人物弧光 Tab 中已有完整编辑）
+- [x] **场景名显示**：编辑模式下场景名从可编辑输入框改为固定名称标签
+- [x] **分集折叠**：编辑模式下分集改为折叠显示，点击某集才展开编辑内容

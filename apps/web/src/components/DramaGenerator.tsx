@@ -437,12 +437,35 @@ export default function DramaGenerator() {
     setResult({ ...result, characterArcs: updated })
   }, [result])
 
-  // ── Regenerate (start fresh with same settings) ──
+  // ── Regenerate (optimize existing script) ──
   const handleRegenerate = useCallback(() => {
+    if (!result) return
+
+    // Serialize existing result as regeneration context
+    const context = JSON.stringify({
+      title: result.title,
+      premise: result.premise,
+      characters: result.characters.map(c => ({
+        name: c.name, gender: c.gender, age: c.age,
+        personality: c.personality, background: c.background,
+        arc: c.arc, role: c.role, relationships: c.relationships,
+      })),
+      episodes: result.episodes.map(e => ({
+        episode: e.episode, title: e.title, synopsis: e.synopsis,
+        hook: e.hook, scenes: e.scenes,
+      })),
+      characterArcs: result.characterArcs,
+    })
+
+    const instruction = locale === 'zh-CN'
+      ? `请基于以下现有剧本进行重新生成和优化。保留角色、核心设定和集数结构，但改进内容质量、增强薄弱场景、修复不一致之处。不要创建全新的故事——从以下现有内容工作：\n\n${context}`
+      : `Please regenerate and optimize the EXISTING script below. Keep the characters, core premise, and episode structure, but improve content quality, enhance weak scenes, and fix any inconsistencies. Do NOT create a completely new story — work from this existing content:\n\n${context}`
+
+    setAdditionalInstructions(instruction)
     clearGenerationCheckpoint()
     setIsEditing(false)
-    handleGenerate()
-  }, [handleGenerate])
+    setTimeout(() => handleGenerate(), 50)
+  }, [result, handleGenerate, locale])
 
   const getGenreLabel = (genre: DramaGenre): string => gt(genre)
   const getGenreIcon = (genre: DramaGenre): string =>

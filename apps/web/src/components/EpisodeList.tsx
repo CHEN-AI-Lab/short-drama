@@ -58,90 +58,118 @@ export default function EpisodeList({
     return (
       <div className="space-y-6">
         <div className="space-y-3">
-          {episodes.map((ep, idx) => (
-            <Card key={ep.episode}>
-              <CardContent className="space-y-3">
-                <div className="text-xs font-medium text-indigo-500">
-                  {episodeLabel(ep.episode)}
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    {locale === 'zh-CN' ? '标题' : 'Title'}
-                  </label>
-                  <input
-                    type="text"
-                    value={ep.title}
-                    onChange={(e) => onEpisodeEdit(idx, { ...ep, title: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    {locale === 'zh-CN' ? '概要' : 'Synopsis'}
-                  </label>
-                  <textarea
-                    value={ep.synopsis}
-                    onChange={(e) => onEpisodeEdit(idx, { ...ep, synopsis: e.target.value })}
-                    rows={3}
-                    className={inputCls + ' resize-none'}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    {locale === 'zh-CN' ? '悬念钩子' : 'Hook'}
-                  </label>
-                  <input
-                    type="text"
-                    value={ep.hook || ''}
-                    onChange={(e) => onEpisodeEdit(idx, { ...ep, hook: e.target.value })}
-                    className={inputCls}
-                  />
-                </div>
-                {/* Scenes */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    {locale === 'zh-CN' ? '场景' : 'Scenes'}
-                  </label>
-                  <div className="space-y-2">
-                    {(ep.scenes || []).map((scene, si) => (
-                      <div key={si} className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="text"
-                            value={scene.title}
-                            onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, title: e.target.value }))}
-                            className={inputClsSm}
-                            placeholder={locale === 'zh-CN' ? '场景名' : 'Scene title'}
-                          />
-                          <input
-                            type="text"
-                            value={scene.location}
-                            onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, location: e.target.value }))}
-                            className={inputClsSm}
-                            placeholder={locale === 'zh-CN' ? '地点' : 'Location'}
-                          />
-                        </div>
-                        <textarea
-                          value={scene.description}
-                          onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, description: e.target.value }))}
-                          rows={2}
-                          className={inputClsSm + ' resize-none'}
-                          placeholder={locale === 'zh-CN' ? '描述' : 'Description'}
-                        />
-                        <textarea
-                          value={(scene.keyDialogue || []).join('\n')}
-                          onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, keyDialogue: e.target.value.split('\n').filter(Boolean) }))}
-                          rows={3}
-                          className={inputClsSm + ' resize-none font-mono'}
-                          placeholder={locale === 'zh-CN' ? '对白（每行一段）' : 'Dialogue (one line per exchange)'}
+          {episodes.map((ep, idx) => {
+            const isOpen = openEpisode === ep.episode
+            return (
+              <Card key={ep.episode} hover onClick={() => toggleEpisode(ep.episode)}>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Badge color="primary">{episodeLabel(ep.episode)}</Badge>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">
+                        {ep.title}
+                      </span>
+                    </div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180' : ''
+                      }`}
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+
+                  {isOpen && (
+                    <div className="pt-3 space-y-3 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          {locale === 'zh-CN' ? '标题' : 'Title'}
+                        </label>
+                        <input
+                          type="text"
+                          value={ep.title}
+                          onChange={(e) => onEpisodeEdit(idx, { ...ep, title: e.target.value })}
+                          className={inputCls}
                         />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          {locale === 'zh-CN' ? '概要' : 'Synopsis'}
+                        </label>
+                        <textarea
+                          value={ep.synopsis}
+                          onChange={(e) => onEpisodeEdit(idx, { ...ep, synopsis: e.target.value })}
+                          rows={3}
+                          className={inputCls + ' resize-none'}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          {locale === 'zh-CN' ? '悬念钩子' : 'Hook'}
+                        </label>
+                        <input
+                          type="text"
+                          value={ep.hook || ''}
+                          onChange={(e) => onEpisodeEdit(idx, { ...ep, hook: e.target.value })}
+                          className={inputCls}
+                        />
+                      </div>
+                      {/* Scenes */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          {locale === 'zh-CN' ? '场景' : 'Scenes'}
+                        </label>
+                        <div className="space-y-2">
+                          {(ep.scenes || []).map((scene, si) => (
+                            <div key={si} className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider shrink-0">
+                                    {locale === 'zh-CN' ? '场景名' : 'Scene'}
+                                  </span>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {scene.title}
+                                  </span>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={scene.location}
+                                  onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, location: e.target.value }))}
+                                  className={inputClsSm}
+                                  placeholder={locale === 'zh-CN' ? '地点' : 'Location'}
+                                />
+                              </div>
+                              <textarea
+                                value={scene.description}
+                                onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, description: e.target.value }))}
+                                rows={2}
+                                className={inputClsSm + ' resize-none'}
+                                placeholder={locale === 'zh-CN' ? '描述' : 'Description'}
+                              />
+                              <textarea
+                                value={(scene.keyDialogue || []).join('\n')}
+                                onChange={(e) => onEpisodeEdit(idx, editScene(ep, si, { ...scene, keyDialogue: e.target.value.split('\n').filter(Boolean) }))}
+                                rows={3}
+                                className={inputClsSm + ' resize-none font-mono'}
+                                placeholder={locale === 'zh-CN' ? '对白（每行一段）' : 'Dialogue (one line per exchange)'}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       </div>
     )
