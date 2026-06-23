@@ -1,4 +1,4 @@
-name: Auto PR - staging to main
+name: Staging Deploy + PR
 
 on:
   push:
@@ -6,7 +6,33 @@ on:
       - staging
 
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      preview_url: ${{ steps.preview-deploy.outputs.preview_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install
+      - run: pnpm test
+      - run: pnpm build
+
+      - name: Deploy to Vercel (Preview — staging)
+        id: preview-deploy
+        run: |
+          DEPLOY_URL=$(npx vercel --token=${{ secrets.VERCEL_TOKEN }} --scope ch-ai-lab 2>&1 | tee /dev/stderr | grep -oP 'https://[^\s]+' | head -1)
+          echo "preview_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to: $DEPLOY_URL"
+
   create-pr:
+    needs: deploy
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -14,6 +40,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: staging
 
       - name: Create Pull Request (staging → main)
         id: create-pr
@@ -25,16 +53,17 @@ jobs:
           title: "🔄 Auto PR: staging → main"
           body: |
             ## Auto-generated PR from staging branch
-            
-            A push was made to the `staging` branch.
+
+            **✅ 已部署到预览环境：** ${{ needs.deploy.outputs.preview_url }}
+
             Review the changes below and merge when ready for production.
-            
+
             **Checklist before merging:**
             - [ ] Code reviewed
-            - [ ] Tested on staging environment
+            - [ ] Tested on ${{ needs.deploy.outputs.preview_url }}
             - [ ] Database migrations verified (if any)
             - [ ] No breaking changes
-            
+
             _This PR was automatically created by GitHub Actions._
           labels: auto-pr, staging
           delete-branch: false
