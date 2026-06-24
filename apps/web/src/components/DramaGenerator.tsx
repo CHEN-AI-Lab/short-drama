@@ -139,6 +139,28 @@ export default function DramaGenerator() {
     }
   }, [])
 
+  // Persist current result to localStorage so editing survives page refresh
+  useEffect(() => {
+    if (result) {
+      localStorage.setItem('short_drama_current_result', JSON.stringify(result))
+    }
+  }, [result])
+
+  // Restore current result from localStorage on initial mount (if no historyId)
+  useEffect(() => {
+    if (!result && !searchParams.get('historyId')) {
+      try {
+        const raw = localStorage.getItem('short_drama_current_result')
+        if (raw) {
+          const parsed = JSON.parse(raw) as GenerationResponse
+          if (parsed.title) {
+            setResult(parsed)
+          }
+        }
+      } catch { /* ignore */ }
+    }
+  }, [])
+
   // ── Handlers ──
   const toggleGenre = useCallback(
     (genre: DramaGenre) => {

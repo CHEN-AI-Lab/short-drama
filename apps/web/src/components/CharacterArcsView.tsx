@@ -87,18 +87,6 @@ export default function CharacterArcsView({
 
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    {locale === 'zh-CN' ? '弧光' : 'Arc'}
-                  </label>
-                  <textarea
-                    value={char.arc || ''}
-                    onChange={(e) => onArcEdit(idx, { ...arc, character: { ...char, arc: e.target.value } })}
-                    rows={3}
-                    className={inputCls + ' resize-none'}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                     {locale === 'zh-CN' ? '最终状态' : 'Final State'}
                   </label>
                   <textarea
