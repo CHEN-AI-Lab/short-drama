@@ -1,9 +1,9 @@
-name: Staging Deploy + PR
+name: Preview Deploy + PR
 
 on:
   push:
     branches:
-      - staging
+      - preview
 
 jobs:
   deploy:
@@ -24,7 +24,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
-      - name: Deploy to Vercel (Preview — staging)
+      - name: Deploy to Vercel (Preview)
         id: preview-deploy
         run: |
           DEPLOY_URL=$(npx vercel --token=${{ secrets.VERCEL_TOKEN }} --scope ch-ai-lab 2>&1 | tee /dev/stderr | grep -oP 'https://[^\s]+' | head -1)
@@ -41,20 +41,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: staging
+          ref: preview
 
-      - name: Create Pull Request (staging → main)
+      - name: Create Pull Request (preview → main)
         id: create-pr
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
-          branch: staging
-          title: "🔄 Auto PR: staging → main"
+          branch: preview
+          title: "🔄 Auto PR: preview → main"
           body: |
-            ## Auto-generated PR from staging branch
+            ## Auto-generated PR from preview branch
 
-            **✅ 已部署到预览环境：** ${{ needs.deploy.outputs.preview_url }}
+            **✅ Deployed to preview:** ${{ needs.deploy.outputs.preview_url }}
 
             Review the changes below and merge when ready for production.
 
@@ -65,5 +65,5 @@ jobs:
             - [ ] No breaking changes
 
             _This PR was automatically created by GitHub Actions._
-          labels: auto-pr, staging
+          labels: auto-pr, preview
           delete-branch: false

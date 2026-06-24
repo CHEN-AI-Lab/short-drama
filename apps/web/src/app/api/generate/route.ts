@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     let shouldIncrementCount = false
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
     if (supabaseUrl && supabaseAnonKey) {
       try {
@@ -81,17 +81,15 @@ export async function POST(request: Request) {
     const userPrompt = buildUserPrompt({ genres, episodeCount, generationType, locale, additionalInstructions })
 
     // ── Call AI API with provider fallback ──
-    // Primary: OPENAI_* env vars. Backup: BACKUP_* env vars (optional).
-    // If SenseTime fails, falls back to the backup provider automatically.
 
     const providers: { baseUrl: string; apiKey: string; model: string; label: string }[] = []
 
-    const primaryKey = process.env.OPENAI_API_KEY
+    const primaryKey = process.env.AI_API_KEY
     if (primaryKey) {
       providers.push({
-        baseUrl: process.env.OPENAI_BASE_URL || 'https://token.sensenova.cn/v1',
+        baseUrl: process.env.AI_BASE_URL as string,
         apiKey: primaryKey,
-        model: process.env.OPENAI_MODEL || 'sensenova-6.7-flash-lite',
+        model: process.env.AI_MODEL as string,
         label: 'SenseTime',
       })
     }
@@ -99,9 +97,9 @@ export async function POST(request: Request) {
     const backupKey = process.env.BACKUP_API_KEY
     if (backupKey) {
       providers.push({
-        baseUrl: process.env.BACKUP_BASE_URL || 'https://api.openai.com/v1',
+        baseUrl: process.env.BACKUP_BASE_URL as string,
         apiKey: backupKey,
-        model: process.env.BACKUP_MODEL || 'gpt-4o-mini',
+        model: process.env.BACKUP_MODEL as string,
         label: 'Backup',
       })
     }

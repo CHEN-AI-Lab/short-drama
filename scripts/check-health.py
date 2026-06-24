@@ -13,12 +13,12 @@ for l in raw.decode("latin-1").split("\n"):
 
 token = d.get("VERCEL_TOKEN")
 auth = f"Authorization: Bearer *** Version 2 logs - try the main deployment URL directly
-r = subprocess.run(["curl", "-s", "https://short-drama-iota.vercel.app/api/health"], capture_output=True, text=True, timeout=15)
+r = subprocess.run(["curl", "-s", "https://sd.aaigc.online/api/health"], capture_output=True, text=True, timeout=15)
 print(f"Health check: {r.stdout[:200]}")
 print(f"Status: {r.returncode}")
 
 # Also check the 500 error page body
-r2 = subprocess.run(["curl", "-sv", "https://short-drama-iota.vercel.app/", "-o", "/dev/null"], capture_output=True, text=True, timeout=15)
+r2 = subprocess.run(["curl", "-sv", "https://sd.aaigc.online/", "-o", "/dev/null"], capture_output=True, text=True, timeout=15)
 # Check for redirect or error
 for line in r2.stderr.split("\n"):
     if any(x in line.lower() for x in ["location", "http/", "500", "error"]):

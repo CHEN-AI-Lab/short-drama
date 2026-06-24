@@ -53,7 +53,7 @@ Staging vars use `STAGING_` prefix (e.g. `STAGING_NEXT_PUBLIC_SUPABASE_URL`).
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Supabase anon/public key |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key |
 | `OPENAI_API_KEY` | ✅ | AI API key (SenseTime) |
 | `OPENAI_BASE_URL` | ✅ | AI API base URL |

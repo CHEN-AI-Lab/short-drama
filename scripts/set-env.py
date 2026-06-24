@@ -46,7 +46,7 @@ aliases = {
     "AI_API_KEY": "OPENAI_API_KEY",
     "AI_BASE_URL": "OPENAI_BASE_URL",
     "AI_MODEL": "OPENAI_MODEL",
-    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
 }
 for src_name, target_name in aliases.items():
     if src_name in d and target_name not in d:
@@ -60,7 +60,7 @@ env_vars = {
     "BACKUP_BASE_URL": "plain",
     "BACKUP_MODEL": "plain",
     "NEXT_PUBLIC_SUPABASE_URL": "plain",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "encrypted",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "encrypted",
     "SUPABASE_SERVICE_ROLE_KEY": "encrypted",
 }
 

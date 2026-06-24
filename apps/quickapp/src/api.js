@@ -1,4 +1,4 @@
-const BASE_URL = 'https://short-drama-iota.vercel.app'
+const BASE_URL = 'https://sd.aaigc.online'
 
 function request(path, options = {}) {
   return new Promise((resolve, reject) => {
