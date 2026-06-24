@@ -139,6 +139,28 @@ export default function DramaGenerator() {
     }
   }, [])
 
+  // Persist current result to localStorage so editing survives page refresh
+  useEffect(() => {
+    if (result) {
+      localStorage.setItem('short_drama_current_result', JSON.stringify(result))
+    }
+  }, [result])
+
+  // Restore current result from localStorage on initial mount (if no historyId)
+  useEffect(() => {
+    if (!result && !searchParams.get('historyId')) {
+      try {
+        const raw = localStorage.getItem('short_drama_current_result')
+        if (raw) {
+          const parsed = JSON.parse(raw) as GenerationResponse
+          if (parsed.title) {
+            setResult(parsed)
+          }
+        }
+      } catch { /* ignore */ }
+    }
+  }, [])
+
   // ── Handlers ──
   const toggleGenre = useCallback(
     (genre: DramaGenre) => {
@@ -402,39 +424,61 @@ export default function DramaGenerator() {
 
   const handleEditSave = useCallback(() => {
     if (!result) return
-    setResult({
+    const updated = {
       ...result,
       title: editTitle,
       premise: editPremise,
-    })
+    }
+    setResult(updated)
+    localStorage.setItem('short_drama_current_result', JSON.stringify(updated))
+    // Also sync back to history so history page re-entry shows latest edits
+    try {
+      const raw = localStorage.getItem('short_drama_history')
+      if (raw) {
+        const items: HistoryItem[] = JSON.parse(raw)
+        const idx = items.findIndex((i) => i.result?.title === result.title)
+        if (idx !== -1) {
+          items[idx] = { ...items[idx], result: updated }
+          localStorage.setItem('short_drama_history', JSON.stringify(items))
+        }
+      }
+    } catch { /* ignore */ }
     setIsEditing(false)
   }, [result, editTitle, editPremise])
 
   // ── Inline editing: child component updates ──
   const handleResultUpdate = useCallback((update: Partial<GenerationResponse>) => {
     if (!result) return
-    setResult({ ...result, ...update })
+    const newResult = { ...result, ...update }
+    setResult(newResult)
+    localStorage.setItem('short_drama_current_result', JSON.stringify(newResult))
   }, [result])
 
   const handleCharacterEdit = useCallback((index: number, char: Character) => {
     if (!result) return
     const updated = [...result.characters]
     updated[index] = char
-    setResult({ ...result, characters: updated })
+    const newResult = { ...result, characters: updated }
+    setResult(newResult)
+    localStorage.setItem('short_drama_current_result', JSON.stringify(newResult))
   }, [result])
 
   const handleEpisodeEdit = useCallback((index: number, ep: EpisodeOutline) => {
     if (!result) return
     const updated = [...result.episodes]
     updated[index] = ep
-    setResult({ ...result, episodes: updated })
+    const newResult = { ...result, episodes: updated }
+    setResult(newResult)
+    localStorage.setItem('short_drama_current_result', JSON.stringify(newResult))
   }, [result])
 
   const handleArcEdit = useCallback((index: number, arc: CharacterArc) => {
     if (!result) return
     const updated = [...result.characterArcs]
     updated[index] = arc
-    setResult({ ...result, characterArcs: updated })
+    const newResult = { ...result, characterArcs: updated }
+    setResult(newResult)
+    localStorage.setItem('short_drama_current_result', JSON.stringify(newResult))
   }, [result])
 
   // ── Regenerate (optimize existing script) ──

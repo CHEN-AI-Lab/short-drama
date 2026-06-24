@@ -1,6 +1,6 @@
 import type { GenerationRequest, GenerationResponse } from '../types'
 
-const TIMEOUT_MS = 70000 // 70s — slightly longer than server's 60s AbortSignal
+const TIMEOUT_MS = 120000 // 120s — SenseTime API often takes 55-67s
 
 /**
  * Send a drama generation request to the API.
