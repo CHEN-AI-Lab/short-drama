@@ -431,6 +431,18 @@ export default function DramaGenerator() {
     }
     setResult(updated)
     localStorage.setItem('short_drama_current_result', JSON.stringify(updated))
+    // Also sync back to history so history page re-entry shows latest edits
+    try {
+      const raw = localStorage.getItem('short_drama_history')
+      if (raw) {
+        const items: HistoryItem[] = JSON.parse(raw)
+        const idx = items.findIndex((i) => i.result?.title === result.title)
+        if (idx !== -1) {
+          items[idx] = { ...items[idx], result: updated }
+          localStorage.setItem('short_drama_history', JSON.stringify(items))
+        }
+      }
+    } catch { /* ignore */ }
     setIsEditing(false)
   }, [result, editTitle, editPremise])
 
