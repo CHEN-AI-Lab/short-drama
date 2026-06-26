@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 const locales = ['zh-CN', 'en']
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://short-drama.vercel.app'
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL as string
 
 const pages = ['', '/pricing', '/sign-in', '/sign-up', '/success']
 
